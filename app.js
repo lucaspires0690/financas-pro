@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCHzkNkJK56L4d7ncVbZfjB9pCWacqF3Cc",
@@ -17,9 +17,14 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 let currentUser = null;
-let devedores = [];
-let pessoaAtivaId = null;
+let todasMovimentacoes = [];
 let unsubscribeSnapshot = null;
+let grafico = null;
+let abaAtual = "entrou";
+
+// Data atual
+const hoje = new Date();
+document.getElementById('filtro-mes').value = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
 
 // Autenticação
 onAuthStateChanged(auth, (user) => {
@@ -36,7 +41,7 @@ onAuthStateChanged(auth, (user) => {
             userPhoto.classList.remove('hidden');
         }
         
-        iniciarEscutaDados();
+        iniciarEscuta();
     } else {
         currentUser = null;
         document.getElementById('view-auth').classList.remove('hidden');
@@ -46,134 +51,201 @@ onAuthStateChanged(auth, (user) => {
 });
 
 window.fazerLoginGoogle = () => {
-    signInWithPopup(auth, provider).catch(err => alert("Falha no login: " + err.message));
+    signInWithPopup(auth, provider).catch(err => alert("Erro: " + err.message));
 };
 
 window.fazerLogout = () => signOut(auth);
 
-// Dados
-function iniciarEscutaDados() {
-    const colRef = collection(db, "users", currentUser.uid, "devedores");
-    unsubscribeSnapshot = onSnapshot(colRef, (snapshot) => {
-        devedores = [];
-        snapshot.forEach(doc => devedores.push({ id: doc.id, ...doc.data() }));
-        renderizarLista();
-        if (pessoaAtivaId) atualizarViewDetalhes();
+// Escuta dados
+function iniciarEscuta() {
+    const movRef = collection(db, "users", currentUser.uid, "movimentacoes");
+    unsubscribeSnapshot = onSnapshot(movRef, (snapshot) => {
+        todasMovimentacoes = [];
+        snapshot.forEach(doc => {
+            todasMovimentacoes.push({ id: doc.id, ...doc.data() });
+        });
+        atualizarTela();
     });
 }
 
-const getPessoaDoc = (id) => doc(db, "users", currentUser.uid, "devedores", id);
-
-window.renderizarLista = () => {
-    const container = document.getElementById('lista-pessoas');
-    const empty = document.getElementById('empty-state');
-    if (devedores.length === 0) {
-        container.innerHTML = "";
-        empty.classList.remove('hidden');
+// Salvar
+window.salvar = async () => {
+    const tipo = document.querySelector('input[name="tipo"]:checked').value;
+    const descricao = document.getElementById('descricao').value.trim();
+    const valor = parseFloat(document.getElementById('valor').value);
+    const categoria = document.getElementById('categoria').value;
+    let data = document.getElementById('data').value;
+    const qtdParcelas = parseInt(document.getElementById('parcelas').value);
+    
+    if (!descricao || isNaN(valor)) {
+        alert("Preencha a descrição e o valor");
         return;
     }
-    empty.classList.add('hidden');
-    container.innerHTML = devedores.map(p => {
-        const totalPago = (p.pagamentos || []).reduce((acc, pg) => acc + pg.valor, 0);
-        const saldo = Math.max(0, p.meta - totalPago);
-        return `
-        <div onclick="verPessoa('${p.id}')" class="glass-card p-6 rounded-[2rem] cursor-pointer hover:border-indigo-500/50 transition-all active:scale-95 group">
-            <h3 class="font-black text-white uppercase text-sm mb-4 group-hover:text-indigo-400 truncate">${p.nome}</h3>
-            <div class="flex justify-between items-end">
-                <div>
-                    <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Restante</p>
-                    <p class="text-xl font-black text-white">R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                </div>
-                <div class="bg-indigo-500/10 p-2 rounded-xl">
-                     <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-};
-
-window.verPessoa = (id) => {
-    pessoaAtivaId = id;
-    document.getElementById('view-lista').classList.add('hidden');
-    document.getElementById('view-detalhes').classList.remove('hidden');
-    atualizarViewDetalhes();
-};
-
-window.voltarParaLista = () => {
-    pessoaAtivaId = null;
-    document.getElementById('view-lista').classList.remove('hidden');
-    document.getElementById('view-detalhes').classList.add('hidden');
-};
-
-window.salvarPessoa = async () => {
-    const nome = document.getElementById('novo-nome').value.trim();
-    const valor = parseFloat(document.getElementById('novo-valor').value);
-    if (!nome || isNaN(valor)) return;
-    const id = Date.now().toString();
-    await setDoc(getPessoaDoc(id), { nome, meta: valor, pagamentos: [], criadoEm: new Date().toISOString() });
-    fecharModalPessoa();
-    document.getElementById('novo-nome').value = "";
-    document.getElementById('novo-valor').value = "";
-};
-
-window.lancarPagamento = async () => {
-    const input = document.getElementById('input-pagamento');
-    const valor = parseFloat(input.value);
-    if (isNaN(valor) || valor <= 0) return;
-    const p = devedores.find(d => d.id === pessoaAtivaId);
-    const novos = [...(p.pagamentos || []), { valor, data: new Date().toLocaleString('pt-BR') }];
-    await updateDoc(getPessoaDoc(pessoaAtivaId), { pagamentos: novos });
-    input.value = "";
-};
-
-window.removerPagamento = async (idx) => {
-    const p = devedores.find(d => d.id === pessoaAtivaId);
-    const novos = [...p.pagamentos];
-    novos.splice(idx, 1);
-    await updateDoc(getPessoaDoc(pessoaAtivaId), { pagamentos: novos });
-};
-
-window.deletarPessoaAtual = async () => {
-    if (confirm("Deseja mesmo excluir permanentemente?")) {
-        await deleteDoc(getPessoaDoc(pessoaAtivaId));
-        voltarParaLista();
+    
+    if (!data) data = new Date().toISOString().split('T')[0];
+    
+    const valorParcela = valor / qtdParcelas;
+    const parcelas = [];
+    const dataInicial = new Date(data);
+    
+    for (let i = 0; i < qtdParcelas; i++) {
+        const dataVenc = new Date(dataInicial);
+        dataVenc.setMonth(dataInicial.getMonth() + i);
+        parcelas.push({
+            numero: i + 1,
+            valor: valorParcela,
+            vencimento: dataVenc.toISOString().split('T')[0],
+            pago: false
+        });
+    }
+    
+    try {
+        await addDoc(collection(db, "users", currentUser.uid, "movimentacoes"), {
+            tipo, descricao, valorTotal: valor, categoria,
+            dataInicio: data, qtdParcelas, parcelas, criadoEm: new Date().toISOString()
+        });
+        fecharModal();
+        document.getElementById('descricao').value = '';
+        document.getElementById('valor').value = '';
+        document.getElementById('data').value = '';
+        document.getElementById('parcelas').value = '1';
+    } catch(err) {
+        alert("Erro: " + err.message);
     }
 };
 
-window.confirmarNovaMeta = async () => {
-    const v = parseFloat(document.getElementById('edit-meta').value);
-    if (!isNaN(v)) {
-        await updateDoc(getPessoaDoc(pessoaAtivaId), { meta: v });
-        fecharModalMeta();
-    }
-};
-
-function atualizarViewDetalhes() {
-    const p = devedores.find(d => d.id === pessoaAtivaId);
-    if (!p) return;
-    const totalPago = (p.pagamentos || []).reduce((acc, pg) => acc + pg.valor, 0);
-    const saldo = Math.max(0, p.meta - totalPago);
-    const perc = p.meta > 0 ? (totalPago / p.meta) * 100 : 0;
-    document.getElementById('detalhe-nome').innerText = p.nome;
-    document.getElementById('detalhe-saldo').innerText = `R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-    document.getElementById('detalhe-barra').style.width = `${perc}%`;
-    const container = document.getElementById('detalhe-historico');
-    container.innerHTML = [...(p.pagamentos || [])].reverse().map((pg, i) => {
-        const realIdx = p.pagamentos.length - 1 - i;
-        return `<div class="flex justify-between items-center bg-slate-800/40 p-4 rounded-xl mb-2 border border-white/5">
-            <div><p class="text-[8px] text-slate-500 font-bold">${pg.data}</p><p class="text-white font-black text-sm">R$ ${pg.valor.toFixed(2)}</p></div>
-            <button onclick="removerPagamento(${realIdx})" class="text-slate-700 hover:text-red-500 transition-colors">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
-        </div>`;
-    }).join('') || `<p class="text-center text-slate-700 text-[10px] py-6 font-bold uppercase">Sem registros</p>`;
+// Atualizar tela
+function atualizarTela() {
+    const mesFiltro = document.getElementById('filtro-mes').value;
+    const [ano, mes] = mesFiltro.split('-');
+    
+    let totalEntrou = 0;
+    let totalSaiu = 0;
+    const gastosPorCategoria = {};
+    
+    const entradasMes = [];
+    const saidasMes = [];
+    
+    todasMovimentacoes.forEach(mov => {
+        mov.parcelas.forEach(parcela => {
+            const dataParc = new Date(parcela.vencimento);
+            if (dataParc.getFullYear() === parseInt(ano) && dataParc.getMonth()+1 === parseInt(mes) && parcela.pago) {
+                if (mov.tipo === 'entrou') {
+                    totalEntrou += parcela.valor;
+                    entradasMes.push({ ...mov, parcelaAtual: parcela });
+                } else {
+                    totalSaiu += parcela.valor;
+                    saidasMes.push({ ...mov, parcelaAtual: parcela });
+                    const cat = mov.categoria;
+                    gastosPorCategoria[cat] = (gastosPorCategoria[cat] || 0) + parcela.valor;
+                }
+            }
+        });
+    });
+    
+    const total = totalEntrou - totalSaiu;
+    document.getElementById('card-total').innerHTML = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    document.getElementById('card-entrou').innerHTML = `R$ ${totalEntrou.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    document.getElementById('card-saiu').innerHTML = `R$ ${totalSaiu.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    
+    const corTotal = total >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    document.getElementById('card-total').className = `text-xl font-black ${corTotal}`;
+    
+    renderizarLista(entradasMes, 'entrou');
+    renderizarLista(saidasMes, 'saiu');
+    atualizarGrafico(gastosPorCategoria);
 }
 
-window.abrirModalPessoa = () => document.getElementById('modal-pessoa').classList.add('active');
-window.fecharModalPessoa = () => document.getElementById('modal-pessoa').classList.remove('active');
-window.abrirModalMeta = () => {
-    const p = devedores.find(d => d.id === pessoaAtivaId);
-    document.getElementById('edit-meta').value = p.meta;
-    document.getElementById('modal-meta').classList.add('active');
+function renderizarLista(itens, tipo) {
+    const container = document.getElementById(`lista-${tipo}`);
+    if (itens.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-500 py-8">Nenhum registro</div>';
+        return;
+    }
+    
+    container.innerHTML = itens.map(item => {
+        const parcela = item.parcelaAtual;
+        const status = parcela.pago ? '✅' : '⏳';
+        const cor = tipo === 'entrou' ? 'emerald' : 'rose';
+        return `
+            <div class="item-lista">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-bold">${item.descricao}</p>
+                        <p class="text-[10px] text-slate-400">${item.categoria}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-${cor}-400">R$ ${parcela.valor.toFixed(2)}</p>
+                        <p class="text-[9px] text-slate-500">${parcela.numero}/${item.qtdParcelas} • Vence ${formatarData(parcela.vencimento)}</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="togglePago('${item.id}', ${parcela.numero-1})" class="text-[10px] ${parcela.pago ? 'text-slate-500' : 'text-emerald-400'}">${status} ${parcela.pago ? 'Pago' : 'Marcar pago'}</button>
+                    ${!parcela.pago ? `<button onclick="editarParcela('${item.id}', ${parcela.numero-1})" class="text-[10px] text-indigo-400">✏️ Editar</button>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function togglePago(id, parcelaIndex) {
+    const mov = todasMovimentacoes.find(m => m.id === id);
+    if (!mov) return;
+    const novasParcelas = [...mov.parcelas];
+    novasParcelas[parcelaIndex].pago = !novasParcelas[parcelaIndex].pago;
+    await updateDoc(doc(db, "users", currentUser.uid, "movimentacoes", id), { parcelas: novasParcelas });
+}
+
+function atualizarGrafico(dados) {
+    const ctx = document.getElementById('grafico').getContext('2d');
+    const categorias = Object.keys(dados);
+    const valores = Object.values(dados);
+    
+    if (grafico) grafico.destroy();
+    
+    if (categorias.length === 0) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '14px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText('Sem dados', ctx.canvas.width/2, ctx.canvas.height/2);
+        return;
+    }
+    
+    grafico = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: categorias, datasets: [{ data: valores, backgroundColor: ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6'] }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } } }
+    });
+}
+
+window.mostrarAba = (aba) => {
+    abaAtual = aba;
+    document.getElementById('lista-entrou').classList.toggle('hidden', aba !== 'entrou');
+    document.getElementById('lista-saiu').classList.toggle('hidden', aba !== 'saiu');
+    document.getElementById('aba-entrou').className = aba === 'entrou' ? 'tab-ativa px-4 py-2 rounded-xl text-sm font-bold' : 'tab-inativa px-4 py-2 rounded-xl text-sm font-bold';
+    document.getElementById('aba-saiu').className = aba === 'saiu' ? 'tab-ativa px-4 py-2 rounded-xl text-sm font-bold' : 'tab-inativa px-4 py-2 rounded-xl text-sm font-bold';
 };
-window.fecharModalMeta = () => document.getElementById('modal-meta').classList.remove('active');
+
+window.abrirModal = () => document.getElementById('modal').classList.add('active');
+window.fecharModal = () => document.getElementById('modal').classList.remove('active');
+
+window.mudarCategorias = () => {
+    const tipo = document.querySelector('input[name="tipo"]:checked').value;
+    const select = document.getElementById('categoria');
+    if (tipo === 'entrou') {
+        select.innerHTML = '<option value="Salário">💼 Salário</option><option value="Freela">💻 Freela</option><option value="Outras entradas">📌 Outras</option>';
+    } else {
+        select.innerHTML = '<option value="Moradia">🏠 Moradia</option><option value="Alimentação">🍔 Alimentação</option><option value="Transporte">🚗 Transporte</option><option value="Lazer">🎬 Lazer</option><option value="Saúde">💊 Saúde</option><option value="Outras despesas">📌 Outras</option>';
+    }
+};
+
+function formatarData(dataStr) {
+    const d = new Date(dataStr);
+    return `${d.getDate()}/${d.getMonth()+1}`;
+}
+
+document.getElementById('filtro-mes').addEventListener('change', () => atualizarTela());
+
+window.togglePago = togglePago;
+window.editarParcela = (id, idx) => alert('Edição em breve');
