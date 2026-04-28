@@ -94,9 +94,9 @@
             </div>
         </div>
 
-        <!-- NOVO: Dashboard resumo -->
-        <div class="max-w-2xl mx-auto mb-6">
-            <div class="glass-card rounded-[2rem] p-6 mb-3">
+        <!-- NOVO: Dashboard resumo (inserido antes da lista) -->
+        <div class="max-w-2xl mx-auto mb-8">
+            <div class="glass-card rounded-[2rem] p-6">
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Total em aberto</p>
                 <p id="dash-aberto" class="text-4xl font-black text-white tracking-tighter">R$ 0,00</p>
                 <div class="flex gap-5 mt-4 pt-4 border-t border-white/5">
@@ -142,10 +142,10 @@
                     <button onclick="abrirModalMeta()" class="absolute top-6 right-6 p-2 text-slate-500 hover:text-white transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     </button>
-                    <!-- NOVO: badge de status -->
+                    <!-- NOVO: badge de status no detalhe -->
                     <div class="mb-2"><span id="detalhe-badge" class="badge badge-aberta">Em aberto</span></div>
                     <h2 id="detalhe-nome" class="text-xl font-black text-indigo-400 uppercase tracking-tighter mb-1">---</h2>
-                    <!-- NOVO: info de vencimento -->
+                    <!-- NOVO: vencimento no detalhe -->
                     <p id="detalhe-venc-info" class="text-[10px] font-bold text-slate-500 mt-1 hidden"></p>
                     <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Em aberto</span>
                     <h1 id="detalhe-saldo" class="text-5xl font-black text-white mt-2 tracking-tighter">R$ 0,00</h1>
@@ -246,25 +246,17 @@
         let devedores = [];
         let pessoaAtivaId = null;
         let unsubscribeSnapshot = null;
-        let pendingDeleteId = null;
+        let pendingDeleteId = null; // NOVO
 
-        // ── Utils ────────────────────────────────────────
+        // NOVO: utils
         function hoje() { return new Date().toISOString().split('T')[0]; }
-
-        function fmtData(str) {
-            if (!str) return null;
-            const [y, m, d] = str.split('-');
-            return `${d}/${m}/${y}`;
-        }
-
+        function fmtData(str) { if (!str) return null; const [y,m,d] = str.split('-'); return `${d}/${m}/${y}`; }
         function showToast(msg) {
             const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.classList.add('show');
+            el.textContent = msg; el.classList.add('show');
             clearTimeout(showToast._t);
             showToast._t = setTimeout(() => el.classList.remove('show'), 2800);
         }
-
         function statusDevedor(p) {
             const pago = (p.pagamentos || []).reduce((a, pg) => a + pg.valor, 0);
             if (pago >= p.meta) return 'quitada';
@@ -273,12 +265,13 @@
             return 'aberta';
         }
 
-        // ── Autenticação ─────────────────────────────────
+        // --- AUTENTICAÇÃO GOOGLE ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
                 document.getElementById('view-auth').classList.add('hidden');
                 document.getElementById('view-app').classList.remove('hidden');
+                
                 const userDisplay = document.getElementById('user-display');
                 const userPhoto = document.getElementById('user-photo');
                 userDisplay.innerText = user.displayName || user.email;
@@ -286,6 +279,7 @@
                     userPhoto.src = user.photoURL;
                     userPhoto.classList.remove('hidden');
                 }
+                
                 iniciarEscutaDados();
             } else {
                 currentUser = null;
@@ -301,13 +295,13 @@
 
         window.fazerLogout = () => signOut(auth);
 
-        // ── Firestore ────────────────────────────────────
+        // --- GESTÃO DE DADOS ---
         function iniciarEscutaDados() {
             const colRef = collection(db, "users", currentUser.uid, "devedores");
             unsubscribeSnapshot = onSnapshot(colRef, (snapshot) => {
                 devedores = [];
                 snapshot.forEach(doc => devedores.push({ id: doc.id, ...doc.data() }));
-                renderizarDashboard();
+                renderizarDashboard(); // NOVO
                 renderizarLista();
                 if (pessoaAtivaId) atualizarViewDetalhes();
             });
@@ -315,7 +309,7 @@
 
         const getPessoaDoc = (id) => doc(db, "users", currentUser.uid, "devedores", id);
 
-        // ── Dashboard ────────────────────────────────────
+        // NOVO: Dashboard
         function renderizarDashboard() {
             let aberto = 0, recebido = 0, vencidos = 0, quitados = 0;
             devedores.forEach(p => {
@@ -334,7 +328,6 @@
             document.getElementById('dash-quitados').textContent = quitados;
         }
 
-        // ── Lista ────────────────────────────────────────
         window.renderizarLista = () => {
             const container = document.getElementById('lista-pessoas');
             const empty = document.getElementById('empty-state');
@@ -345,7 +338,7 @@
             }
             empty.classList.add('hidden');
 
-            // Ordenação: vencidos → parcial → aberta → quitada
+            // NOVO: ordenação por status
             const ordem = { vencida: 0, parcial: 1, aberta: 2, quitada: 3 };
             const sorted = [...devedores].sort((a, b) => {
                 const diff = ordem[statusDevedor(a)] - ordem[statusDevedor(b)];
@@ -356,21 +349,17 @@
 
             container.innerHTML = sorted.map(p => {
                 const totalPago = (p.pagamentos || []).reduce((acc, pg) => acc + pg.valor, 0);
-                const saldo     = Math.max(0, p.meta - totalPago);
+                const saldo = Math.max(0, p.meta - totalPago);
+                // NOVO: status, badge, barra
                 const perc      = p.meta > 0 ? Math.min(100, (totalPago / p.meta) * 100) : 0;
                 const st        = statusDevedor(p);
-
                 const badgeClass = { aberta:'badge-aberta', parcial:'badge-parcial', vencida:'badge-vencida', quitada:'badge-quitada' }[st];
                 const badgeLabel = { aberta:'Em aberto', parcial:'Parcial', vencida:'Vencida', quitada:'Quitada' }[st];
                 const barClass   = st === 'quitada' ? 'bar-quitada' : st === 'vencida' ? 'bar-vencida' : 'bar-normal';
                 const cardExtra  = st === 'vencida' ? 'card-vencida' : '';
-
-                const vencHtml = p.vencimento
-                    ? `<p class="text-[9px] font-bold mt-1 ${st === 'vencida' ? 'text-red-400' : 'text-slate-600'}">
-                          ${st === 'vencida' ? '⚠ Venceu em ' : 'Vence em '}${fmtData(p.vencimento)}
-                       </p>`
+                const vencHtml   = p.vencimento
+                    ? `<p class="text-[9px] font-bold mt-1 ${st === 'vencida' ? 'text-red-400' : 'text-slate-600'}">${st === 'vencida' ? '⚠ Venceu em ' : 'Vence em '}${fmtData(p.vencimento)}</p>`
                     : '';
-
                 return `
                 <div onclick="verPessoa('${p.id}')" class="glass-card ${cardExtra} p-6 rounded-[2rem] cursor-pointer hover:border-indigo-500/50 transition-all active:scale-95 group">
                     <div class="flex justify-between items-start mb-1">
@@ -387,7 +376,6 @@
                              <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </div>
                     </div>
-                    <!-- barra de progresso no card -->
                     <div class="mini-progress-bg">
                         <div class="mini-progress-fill ${barClass}" style="width:${perc}%"></div>
                     </div>
@@ -413,17 +401,17 @@
         };
 
         window.salvarPessoa = async () => {
-            const nome       = document.getElementById('novo-nome').value.trim();
-            const valor      = parseFloat(document.getElementById('novo-valor').value);
-            const vencimento = document.getElementById('novo-vencimento').value || null;
+            const nome = document.getElementById('novo-nome').value.trim();
+            const valor = parseFloat(document.getElementById('novo-valor').value);
+            const vencimento = document.getElementById('novo-vencimento').value || null; // NOVO
             if (!nome || isNaN(valor)) return;
             const id = Date.now().toString();
             await setDoc(getPessoaDoc(id), { nome, meta: valor, vencimento, pagamentos: [], criadoEm: new Date().toISOString() });
             fecharModalPessoa();
             document.getElementById('novo-nome').value = "";
             document.getElementById('novo-valor').value = "";
-            document.getElementById('novo-vencimento').value = "";
-            showToast('Devedor cadastrado!');
+            document.getElementById('novo-vencimento').value = ""; // NOVO
+            showToast('Devedor cadastrado!'); // NOVO
         };
 
         window.lancarPagamento = async () => {
@@ -434,7 +422,7 @@
             const novos = [...(p.pagamentos || []), { valor, data: new Date().toLocaleString('pt-BR') }];
             await updateDoc(getPessoaDoc(pessoaAtivaId), { pagamentos: novos });
             input.value = "";
-            showToast('Pagamento lançado!');
+            showToast('Pagamento lançado!'); // NOVO
         };
 
         window.removerPagamento = async (idx) => {
@@ -442,10 +430,10 @@
             const novos = [...p.pagamentos];
             novos.splice(idx, 1);
             await updateDoc(getPessoaDoc(pessoaAtivaId), { pagamentos: novos });
-            showToast('Pagamento removido');
+            showToast('Pagamento removido'); // NOVO
         };
 
-        // Exclusão com modal ao invés de confirm()
+        // NOVO: exclusão com modal ao invés de confirm()
         window.deletarPessoaAtual = () => {
             const p = devedores.find(d => d.id === pessoaAtivaId);
             if (!p) return;
@@ -453,28 +441,26 @@
             document.getElementById('modal-exclusao-nome').textContent = `"${p.nome}" — esta ação não pode ser desfeita.`;
             document.getElementById('modal-exclusao').classList.add('active');
         };
-
         window.fecharModalExclusao = () => {
             pendingDeleteId = null;
             document.getElementById('modal-exclusao').classList.remove('active');
         };
-
         window.confirmarExclusao = async () => {
             if (!pendingDeleteId) return;
             const id = pendingDeleteId;
             fecharModalExclusao();
             await deleteDoc(getPessoaDoc(id));
             voltarParaLista();
-            showToast('Registro excluído');
+            showToast('Registro excluído'); // NOVO
         };
 
         window.confirmarNovaMeta = async () => {
-            const v    = parseFloat(document.getElementById('edit-meta').value);
-            const venc = document.getElementById('edit-vencimento').value || null;
+            const v = parseFloat(document.getElementById('edit-meta').value);
+            const venc = document.getElementById('edit-vencimento').value || null; // NOVO
             if (!isNaN(v)) {
                 await updateDoc(getPessoaDoc(pessoaAtivaId), { meta: v, vencimento: venc });
                 fecharModalMeta();
-                showToast('Dados atualizados!');
+                showToast('Dados atualizados!'); // NOVO
             }
         };
 
@@ -483,17 +469,15 @@
             if (!p) return;
             const totalPago = (p.pagamentos || []).reduce((acc, pg) => acc + pg.valor, 0);
             const saldo = Math.max(0, p.meta - totalPago);
-            const perc  = p.meta > 0 ? (totalPago / p.meta) * 100 : 0;
-            const st    = statusDevedor(p);
+            const perc = p.meta > 0 ? (totalPago / p.meta) * 100 : 0;
 
-            // Badge
-            const badgeEl    = document.getElementById('detalhe-badge');
-            const badgeClass = { aberta:'badge-aberta', parcial:'badge-parcial', vencida:'badge-vencida', quitada:'badge-quitada' }[st];
-            const badgeLabel = { aberta:'Em aberto', parcial:'Parcialmente pago', vencida:'Vencida', quitada:'Quitada' }[st];
-            badgeEl.className   = `badge ${badgeClass}`;
-            badgeEl.textContent = badgeLabel;
+            // NOVO: badge de status
+            const st = statusDevedor(p);
+            const badgeEl = document.getElementById('detalhe-badge');
+            badgeEl.className   = `badge ${{ aberta:'badge-aberta', parcial:'badge-parcial', vencida:'badge-vencida', quitada:'badge-quitada' }[st]}`;
+            badgeEl.textContent = { aberta:'Em aberto', parcial:'Parcialmente pago', vencida:'Vencida', quitada:'Quitada' }[st];
 
-            // Vencimento
+            // NOVO: vencimento no detalhe
             const vencInfo = document.getElementById('detalhe-venc-info');
             if (p.vencimento && st !== 'quitada') {
                 vencInfo.classList.remove('hidden');
@@ -507,7 +491,6 @@
             document.getElementById('detalhe-nome').innerText = p.nome;
             document.getElementById('detalhe-saldo').innerText = `R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             document.getElementById('detalhe-barra').style.width = `${perc}%`;
-
             const container = document.getElementById('detalhe-historico');
             container.innerHTML = [...(p.pagamentos || [])].reverse().map((pg, i) => {
                 const realIdx = p.pagamentos.length - 1 - i;
@@ -520,18 +503,17 @@
             }).join('') || `<p class="text-center text-slate-700 text-[10px] py-6 font-bold uppercase">Sem registros</p>`;
         }
 
-        window.abrirModalPessoa  = () => document.getElementById('modal-pessoa').classList.add('active');
+        window.abrirModalPessoa = () => document.getElementById('modal-pessoa').classList.add('active');
         window.fecharModalPessoa = () => document.getElementById('modal-pessoa').classList.remove('active');
-
         window.abrirModalMeta = () => {
             const p = devedores.find(d => d.id === pessoaAtivaId);
-            document.getElementById('edit-meta').value       = p.meta;
-            document.getElementById('edit-vencimento').value = p.vencimento || '';
+            document.getElementById('edit-meta').value = p.meta;
+            document.getElementById('edit-vencimento').value = p.vencimento || ''; // NOVO
             document.getElementById('modal-meta').classList.add('active');
         };
         window.fecharModalMeta = () => document.getElementById('modal-meta').classList.remove('active');
 
-        // Fechar modais clicando fora
+        // NOVO: fechar modais clicando fora
         document.querySelectorAll('.modal').forEach(m => {
             m.addEventListener('click', (e) => {
                 if (e.target === m) {
