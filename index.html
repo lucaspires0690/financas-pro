@@ -1,709 +1,545 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GestorPro | Cobrança</title>
+    <title>Multi-Gestor de Cobrança | Google Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; }
-
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Modais */
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; padding: 1.5rem; }
         .modal.active { display: flex; }
-
-        /* Botão Google */
         .btn-google { background: white; color: #1f2937; transition: all 0.2s; }
         .btn-google:hover { background: #f3f4f6; transform: translateY(-2px); }
 
-        /* Toast */
+        /* NOVO: Toast */
         #toast {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: #1e293b;
-            border: 1px solid rgba(99,102,241,0.4);
-            color: #f1f5f9;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            z-index: 999;
-            opacity: 0;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            white-space: nowrap;
+            position: fixed; bottom: 2rem; left: 50%;
+            transform: translateX(-50%) translateY(16px);
+            background: #1e293b; border: 1px solid rgba(99,102,241,0.4);
+            color: #f1f5f9; padding: 0.65rem 1.4rem;
+            border-radius: 9999px; font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.05em; z-index: 999; opacity: 0;
+            transition: all 0.3s ease; pointer-events: none;
         }
-        #toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* Badge de status */
+        /* NOVO: Badges de status */
         .badge {
-            display: inline-block;
-            font-size: 0.6rem;
-            font-weight: 900;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            padding: 0.2rem 0.55rem;
-            border-radius: 9999px;
+            display: inline-block; font-size: 0.6rem; font-weight: 900;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 0.18rem 0.5rem; border-radius: 9999px;
         }
-        .badge-aberta    { background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); }
-        .badge-parcial   { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
-        .badge-vencida   { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-        .badge-quitada   { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-aberta  { background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); }
+        .badge-parcial { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+        .badge-vencida { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-quitada { background: rgba(34,197,94,0.12);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
 
-        /* Barra de progresso nos cards da lista */
-        .progress-bar-bg { background: rgba(255,255,255,0.05); border-radius: 9999px; height: 4px; overflow: hidden; margin-top: 0.75rem; }
-        .progress-bar-fill { height: 100%; border-radius: 9999px; transition: width 1s ease; }
-        .progress-fill-normal  { background: linear-gradient(90deg, #6366f1, #818cf8); }
-        .progress-fill-quitada { background: linear-gradient(90deg, #22c55e, #4ade80); }
-        .progress-fill-vencida { background: linear-gradient(90deg, #ef4444, #f87171); }
+        /* NOVO: Borda vermelha sutil nos cards vencidos */
+        .card-vencida { border-color: rgba(239,68,68,0.4) !important; }
 
-        /* Card vencido: borda vermelha sutil */
-        .card-vencida { border-color: rgba(239,68,68,0.35) !important; }
-        .card-quitada { opacity: 0.6; }
-
-        /* Dashboard */
-        .dash-number { font-size: 1.6rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
-        .dash-number-sm { font-size: 1.1rem; font-weight: 900; letter-spacing: -0.02em; }
-
-        /* Modal de confirmação de exclusão */
-        #modal-confirmar-exclusao { z-index: 200; }
-
-        /* Animação de entrada dos cards */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .card-anim { animation: fadeUp 0.25s ease both; }
+        /* NOVO: Barra de progresso nos cards da lista */
+        .mini-progress-bg   { background: rgba(255,255,255,0.06); border-radius: 9999px; height: 3px; overflow: hidden; margin-top: 0.6rem; }
+        .mini-progress-fill { height: 100%; border-radius: 9999px; transition: width 0.8s ease; }
+        .bar-normal  { background: linear-gradient(90deg, #6366f1, #818cf8); }
+        .bar-vencida { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .bar-quitada { background: linear-gradient(90deg, #22c55e, #4ade80); }
     </style>
 </head>
 <body class="min-h-screen">
 
-<!-- ══════════════════════════════════
-     TELA DE LOGIN
-══════════════════════════════════ -->
-<div id="view-auth" class="min-h-screen flex items-center justify-center p-6">
-    <div class="w-full max-w-sm text-center">
-        <div class="mb-10">
-            <h1 class="text-4xl font-black tracking-tighter text-white">Gestor<span class="text-indigo-500">Pro</span></h1>
-            <p class="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Acesso Seguro</p>
-        </div>
-        <div class="glass-card p-10 rounded-[3rem] shadow-2xl">
-            <p class="text-slate-400 text-sm mb-8">Gerencie suas cobranças de forma privada e segura.</p>
-            <button onclick="fazerLoginGoogle()" class="btn-google w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl">
-                <svg class="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Entrar com Google
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════
-     APP PRINCIPAL
-══════════════════════════════════ -->
-<div id="view-app" class="hidden p-4 md:p-8">
-
-    <!-- Header -->
-    <div class="max-w-2xl mx-auto flex justify-between items-start mb-6">
-        <div>
-            <h1 class="text-3xl font-black tracking-tighter">Gestor<span class="text-indigo-500">Pro</span></h1>
-            <div class="flex items-center gap-2 mt-1">
-                <img id="user-photo" class="w-5 h-5 rounded-full border border-indigo-500/50 hidden">
-                <p id="user-display" class="text-indigo-500 text-[10px] font-black uppercase tracking-widest"></p>
+    <!-- TELA DE AUTENTICAÇÃO (GOOGLE) -->
+    <div id="view-auth" class="min-h-screen flex items-center justify-center p-6">
+        <div class="w-full max-w-sm text-center">
+            <div class="mb-10">
+                <h1 class="text-4xl font-black tracking-tighter text-white">Gestor<span class="text-indigo-500">Pro</span></h1>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] mt-2">Acesso Seguro</p>
             </div>
-        </div>
-        <div class="flex gap-2">
-            <button onclick="fazerLogout()" class="p-3 text-slate-500 hover:text-red-500 transition-all" title="Sair">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-            </button>
-            <button onclick="abrirModalPessoa()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-2xl transition-all shadow-lg shadow-indigo-600/20" title="Novo devedor">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- ── DASHBOARD ── -->
-    <div class="max-w-2xl mx-auto mb-6">
-        <!-- Card principal: total em aberto -->
-        <div class="glass-card rounded-[2rem] p-6 mb-3 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-transparent pointer-events-none rounded-[2rem]"></div>
-            <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Total em aberto</p>
-            <p id="dash-total-aberto" class="dash-number text-white">R$ 0,00</p>
-            <div class="flex gap-4 mt-4">
-                <div>
-                    <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Recebido</p>
-                    <p id="dash-total-recebido" class="text-sm font-black text-emerald-400">R$ 0,00</p>
-                </div>
-                <div class="w-px bg-white/10"></div>
-                <div>
-                    <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Devedores</p>
-                    <p id="dash-total-pessoas" class="text-sm font-black text-slate-300">0</p>
-                </div>
-                <div class="w-px bg-white/10"></div>
-                <div>
-                    <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Vencidos</p>
-                    <p id="dash-total-vencidos" class="text-sm font-black text-red-400">0</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Cards secundários -->
-        <div class="grid grid-cols-2 gap-3">
-            <div class="glass-card rounded-[1.5rem] p-4">
-                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">⚠ Vencido</p>
-                <p id="dash-valor-vencido" class="dash-number-sm text-red-400">R$ 0,00</p>
-            </div>
-            <div class="glass-card rounded-[1.5rem] p-4">
-                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">✓ Quitados</p>
-                <p id="dash-quitados" class="dash-number-sm text-emerald-400">0</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── LISTA ── -->
-    <div id="view-lista" class="max-w-2xl mx-auto">
-        <div id="lista-pessoas" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        <div id="empty-state" class="hidden text-center py-20 border-2 border-dashed border-slate-800 rounded-[3rem]">
-            <p class="text-slate-600 font-bold uppercase text-xs tracking-widest">Nenhum devedor cadastrado</p>
-        </div>
-    </div>
-
-    <!-- ── DETALHES ── -->
-    <div id="view-detalhes" class="max-w-md mx-auto hidden">
-        <button onclick="voltarParaLista()" class="mb-6 flex items-center gap-2 text-slate-500 hover:text-white font-bold text-xs uppercase transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            Voltar
-        </button>
-
-        <div class="glass-card rounded-[2.5rem] overflow-hidden">
-            <!-- Cabeçalho do detalhe -->
-            <div class="p-10 text-center bg-slate-900/60 relative">
-                <button onclick="abrirModalMeta()" class="absolute top-6 right-6 p-2 text-slate-500 hover:text-white transition-all" title="Editar valor">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            
+            <div class="glass-card p-10 rounded-[3rem] shadow-2xl">
+                <p class="text-slate-400 text-sm mb-8">Gerencie suas cobranças de forma privada e segura.</p>
+                
+                <button onclick="fazerLoginGoogle()" class="btn-google w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Entrar com Google
                 </button>
+            </div>
+        </div>
+    </div>
 
-                <!-- Badge de status no detalhe -->
-                <div class="mb-3">
-                    <span id="detalhe-badge" class="badge badge-aberta">Em aberto</span>
-                </div>
-
-                <h2 id="detalhe-nome" class="text-xl font-black text-indigo-400 uppercase tracking-tighter mb-1">---</h2>
-
-                <!-- Vencimento -->
-                <p id="detalhe-vencimento-info" class="text-[10px] text-slate-500 font-bold mt-1 hidden">
-                    <span id="detalhe-vencimento-label"></span>
-                </p>
-
-                <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2 block">Em aberto</span>
-                <h1 id="detalhe-saldo" class="text-5xl font-black text-white mt-2 tracking-tighter">R$ 0,00</h1>
-
-                <!-- Progresso no detalhe -->
-                <div class="mt-6">
-                    <div class="flex justify-between text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                        <span>Recebido</span>
-                        <span id="detalhe-perc">0%</span>
-                    </div>
-                    <div class="w-full bg-slate-800/40 rounded-full h-2 overflow-hidden">
-                        <div id="detalhe-barra" class="h-full rounded-full transition-all duration-1000 progress-fill-normal" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between text-[9px] font-bold mt-2">
-                        <span class="text-emerald-400" id="detalhe-recebido-valor">R$ 0,00 recebido</span>
-                        <span class="text-slate-500" id="detalhe-total-valor">de R$ 0,00</span>
-                    </div>
+    <!-- APP PRINCIPAL -->
+    <div id="view-app" class="hidden p-4 md:p-8">
+        <div class="max-w-2xl mx-auto flex justify-between items-start mb-8">
+            <div>
+                <h1 class="text-3xl font-black tracking-tighter">Meus Devedores</h1>
+                <div class="flex items-center gap-2 mt-1">
+                    <img id="user-photo" class="w-5 h-5 rounded-full border border-indigo-500/50 hidden">
+                    <p id="user-display" class="text-indigo-500 text-[10px] font-black uppercase tracking-widest"></p>
                 </div>
             </div>
-
-            <!-- Input de pagamento -->
-            <div class="p-6 border-y border-white/5 bg-slate-900/20 flex gap-2">
-                <input type="number" id="input-pagamento" placeholder="Valor R$" step="0.01" min="0.01"
-                    class="flex-[2] bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
-                <button onclick="lancarPagamento()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase rounded-xl transition-all">Lançar</button>
-            </div>
-
-            <!-- Histórico -->
-            <div class="p-6">
-                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 text-center">Histórico de Recebimentos</h3>
-                <div id="detalhe-historico" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div>
-            </div>
-
-            <!-- Ações do detalhe -->
-            <div class="p-4 bg-slate-950/40 text-center">
-                <button onclick="deletarPessoaAtual()" class="text-[9px] text-red-900 hover:text-red-500 font-black uppercase transition-colors">Excluir Registro</button>
+            <div class="flex gap-2">
+                <button onclick="fazerLogout()" class="p-3 text-slate-500 hover:text-red-500 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                </button>
+                <button onclick="abrirModalPessoa()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-2xl transition-all shadow-lg shadow-indigo-600/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                </button>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- ══════════════════════════════════
-     MODAIS
-══════════════════════════════════ -->
-
-<!-- Modal: Novo Devedor -->
-<div id="modal-pessoa" class="modal">
-    <div class="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] w-full max-w-xs shadow-2xl">
-        <h2 class="text-white font-black text-xl mb-6 uppercase tracking-tight">Novo Devedor</h2>
-        <div class="space-y-4">
-            <input type="text" id="novo-nome" placeholder="Nome"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
-            <input type="number" id="novo-valor" placeholder="Dívida Total R$" step="0.01" min="0"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
-            <div>
-                <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">Data de Vencimento</label>
-                <input type="date" id="novo-vencimento"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
-            </div>
-        </div>
-        <div class="flex gap-4 mt-8">
-            <button onclick="fecharModalPessoa()" class="flex-1 text-slate-500 font-bold text-xs uppercase">Cancelar</button>
-            <button onclick="salvarPessoa()" class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-white font-black text-xs uppercase transition-all">Salvar</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Editar Valor/Vencimento -->
-<div id="modal-meta" class="modal">
-    <div class="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] w-full max-w-xs shadow-2xl">
-        <h2 class="text-white font-black text-xl mb-6 uppercase tracking-tight text-center">Editar Dados</h2>
-        <div class="space-y-4">
-            <div>
-                <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">Valor Total (R$)</label>
-                <input type="number" id="edit-meta"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-black text-lg outline-none focus:border-indigo-500 transition-colors">
-            </div>
-            <div>
-                <label class="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">Data de Vencimento</label>
-                <input type="date" id="edit-vencimento"
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-colors">
-            </div>
-        </div>
-        <div class="flex gap-4 mt-8">
-            <button onclick="fecharModalMeta()" class="flex-1 text-slate-500 font-bold text-xs uppercase">Sair</button>
-            <button onclick="confirmarNovaMeta()" class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-white font-black text-xs uppercase transition-all">Atualizar</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Confirmação de Exclusão -->
-<div id="modal-confirmar-exclusao" class="modal">
-    <div class="bg-slate-900 border border-red-900/40 p-8 rounded-[2.5rem] w-full max-w-xs shadow-2xl text-center">
-        <div class="text-3xl mb-4">🗑️</div>
-        <h2 class="text-white font-black text-lg mb-2 uppercase tracking-tight">Excluir registro?</h2>
-        <p id="modal-exclusao-nome" class="text-slate-400 text-sm mb-6">Esta ação não pode ser desfeita.</p>
-        <div class="flex gap-3">
-            <button onclick="fecharModalExclusao()" class="flex-1 py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl text-slate-400 font-black text-xs uppercase transition-all">Cancelar</button>
-            <button onclick="confirmarExclusao()" class="flex-1 py-4 bg-red-600 hover:bg-red-500 rounded-2xl text-white font-black text-xs uppercase transition-all">Excluir</button>
-        </div>
-    </div>
-</div>
-
-<!-- Toast -->
-<div id="toast"></div>
-
-<!-- ══════════════════════════════════
-     SCRIPT
-══════════════════════════════════ -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // ── Firebase config ──────────────────────────────────
-    const firebaseConfig = {
-        apiKey: "AIzaSyCHzkNkJK56L4d7ncVbZfjB9pCWacqF3Cc",
-        authDomain: "gestor-cobranca.firebaseapp.com",
-        projectId: "gestor-cobranca",
-        storageBucket: "gestor-cobranca.firebasestorage.app",
-        messagingSenderId: "553918891395",
-        appId: "1:553918891395:web:be2d2bcbbe13d33c8ee2b6"
-    };
-
-    const app      = initializeApp(firebaseConfig);
-    const auth     = getAuth(app);
-    const db       = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-
-    // ── Estado ───────────────────────────────────────────
-    let currentUser         = null;
-    let devedores           = [];
-    let pessoaAtivaId       = null;
-    let unsubscribeSnapshot = null;
-    let pendingDeleteId     = null;  // id aguardando confirmação de exclusão
-
-    // ── Utils ────────────────────────────────────────────
-    function hoje() {
-        return new Date().toISOString().split('T')[0];
-    }
-
-    function fmtMoeda(v) {
-        return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    function fmtData(str) {
-        if (!str) return null;
-        const [y, m, d] = str.split('-');
-        return `${d}/${m}/${y}`;
-    }
-
-    function showToast(msg) {
-        const el = document.getElementById('toast');
-        el.textContent = msg;
-        el.classList.add('show');
-        clearTimeout(showToast._t);
-        showToast._t = setTimeout(() => el.classList.remove('show'), 2800);
-    }
-
-    function statusDevedor(p) {
-        const totalPago = (p.pagamentos || []).reduce((a, pg) => a + pg.valor, 0);
-        if (totalPago >= p.meta) return 'quitada';
-        if (p.vencimento && p.vencimento < hoje() && totalPago < p.meta) return 'vencida';
-        if (totalPago > 0) return 'parcial';
-        return 'aberta';
-    }
-
-    // ── Autenticação ─────────────────────────────────────
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById('view-auth').classList.add('hidden');
-            document.getElementById('view-app').classList.remove('hidden');
-
-            const userDisplay = document.getElementById('user-display');
-            const userPhoto   = document.getElementById('user-photo');
-            userDisplay.innerText = user.displayName || user.email;
-            if (user.photoURL) {
-                userPhoto.src = user.photoURL;
-                userPhoto.classList.remove('hidden');
-            }
-            iniciarEscutaDados();
-        } else {
-            currentUser = null;
-            document.getElementById('view-auth').classList.remove('hidden');
-            document.getElementById('view-app').classList.add('hidden');
-            if (unsubscribeSnapshot) unsubscribeSnapshot();
-        }
-    });
-
-    window.fazerLoginGoogle = () => {
-        signInWithPopup(auth, provider).catch(err => showToast('Falha no login: ' + err.message));
-    };
-
-    window.fazerLogout = () => signOut(auth);
-
-    // ── Firestore ────────────────────────────────────────
-    function iniciarEscutaDados() {
-        const colRef = collection(db, "users", currentUser.uid, "devedores");
-        unsubscribeSnapshot = onSnapshot(colRef, (snapshot) => {
-            devedores = [];
-            snapshot.forEach(d => devedores.push({ id: d.id, ...d.data() }));
-            renderizarDashboard();
-            renderizarLista();
-            if (pessoaAtivaId) atualizarViewDetalhes();
-        });
-    }
-
-    const getPessoaDoc = (id) => doc(db, "users", currentUser.uid, "devedores", id);
-
-    // ── Dashboard ────────────────────────────────────────
-    function renderizarDashboard() {
-        let totalAberto   = 0;
-        let totalRecebido = 0;
-        let totalVencido  = 0;
-        let quitados      = 0;
-        let vencidos      = 0;
-
-        devedores.forEach(p => {
-            const pago   = (p.pagamentos || []).reduce((a, pg) => a + pg.valor, 0);
-            const saldo  = Math.max(0, p.meta - pago);
-            const status = statusDevedor(p);
-
-            totalRecebido += pago;
-            totalAberto   += saldo;
-
-            if (status === 'vencida') {
-                vencidos++;
-                totalVencido += saldo;
-            }
-            if (status === 'quitada') quitados++;
-        });
-
-        document.getElementById('dash-total-aberto').textContent    = fmtMoeda(totalAberto);
-        document.getElementById('dash-total-recebido').textContent  = fmtMoeda(totalRecebido);
-        document.getElementById('dash-total-pessoas').textContent   = devedores.length;
-        document.getElementById('dash-total-vencidos').textContent  = vencidos;
-        document.getElementById('dash-valor-vencido').textContent   = fmtMoeda(totalVencido);
-        document.getElementById('dash-quitados').textContent        = quitados;
-    }
-
-    // ── Lista ────────────────────────────────────────────
-    window.renderizarLista = () => {
-        const container = document.getElementById('lista-pessoas');
-        const empty     = document.getElementById('empty-state');
-
-        if (devedores.length === 0) {
-            container.innerHTML = "";
-            empty.classList.remove('hidden');
-            return;
-        }
-        empty.classList.add('hidden');
-
-        // Ordenar: vencidos primeiro, depois abertos, depois quitados
-        const ordem = { vencida: 0, parcial: 1, aberta: 2, quitada: 3 };
-        const sorted = [...devedores].sort((a, b) => {
-            const sa = statusDevedor(a), sb = statusDevedor(b);
-            if (ordem[sa] !== ordem[sb]) return ordem[sa] - ordem[sb];
-            // secundário: por vencimento
-            if (a.vencimento && b.vencimento) return a.vencimento.localeCompare(b.vencimento);
-            return 0;
-        });
-
-        container.innerHTML = sorted.map((p, i) => {
-            const totalPago  = (p.pagamentos || []).reduce((a, pg) => a + pg.valor, 0);
-            const saldo      = Math.max(0, p.meta - totalPago);
-            const perc       = p.meta > 0 ? Math.min(100, (totalPago / p.meta) * 100) : 0;
-            const status     = statusDevedor(p);
-
-            const badgeClass = { aberta: 'badge-aberta', parcial: 'badge-parcial', vencida: 'badge-vencida', quitada: 'badge-quitada' }[status];
-            const badgeLabel = { aberta: 'Em aberto', parcial: 'Parcial', vencida: 'Vencida', quitada: 'Quitada' }[status];
-
-            const barClass   = status === 'quitada' ? 'progress-fill-quitada'
-                             : status === 'vencida'  ? 'progress-fill-vencida'
-                             : 'progress-fill-normal';
-
-            const cardClass  = status === 'vencida' ? 'card-vencida' : status === 'quitada' ? 'card-quitada' : '';
-
-            const vencLabel  = p.vencimento
-                ? (status === 'vencida'
-                    ? `<span class="text-red-400">⚠ Venceu em ${fmtData(p.vencimento)}</span>`
-                    : `<span class="text-slate-500">Vence em ${fmtData(p.vencimento)}</span>`)
-                : '';
-
-            return `
-            <div onclick="verPessoa('${p.id}')"
-                class="glass-card ${cardClass} p-6 rounded-[2rem] cursor-pointer hover:border-indigo-500/50 transition-all active:scale-95 group card-anim"
-                style="animation-delay: ${i * 40}ms">
-                <div class="flex justify-between items-start mb-1">
-                    <h3 class="font-black text-white uppercase text-sm group-hover:text-indigo-400 truncate flex-1 mr-2">${p.nome}</h3>
-                    <span class="badge ${badgeClass} shrink-0">${badgeLabel}</span>
-                </div>
-                ${vencLabel ? `<p class="text-[9px] font-bold mt-1 mb-3">${vencLabel}</p>` : '<div class="mb-3"></div>'}
-                <div class="flex justify-between items-end">
+        <!-- NOVO: Dashboard resumo -->
+        <div class="max-w-2xl mx-auto mb-6">
+            <div class="glass-card rounded-[2rem] p-6 mb-3">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Total em aberto</p>
+                <p id="dash-aberto" class="text-4xl font-black text-white tracking-tighter">R$ 0,00</p>
+                <div class="flex gap-5 mt-4 pt-4 border-t border-white/5">
                     <div>
-                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Restante</p>
-                        <p class="text-xl font-black ${status === 'quitada' ? 'text-emerald-400' : 'text-white'}">
-                            ${status === 'quitada' ? '✓ Quitado' : fmtMoeda(saldo)}
-                        </p>
+                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Recebido</p>
+                        <p id="dash-recebido" class="text-sm font-black text-indigo-400">R$ 0,00</p>
                     </div>
-                    <div class="bg-indigo-500/10 p-2 rounded-xl">
-                        <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <div class="w-px bg-white/10"></div>
+                    <div>
+                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Devedores</p>
+                        <p id="dash-total" class="text-sm font-black text-slate-300">0</p>
+                    </div>
+                    <div class="w-px bg-white/10"></div>
+                    <div>
+                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">⚠ Vencidos</p>
+                        <p id="dash-vencidos" class="text-sm font-black text-red-400">0</p>
+                    </div>
+                    <div class="w-px bg-white/10"></div>
+                    <div>
+                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">✓ Quitados</p>
+                        <p id="dash-quitados" class="text-sm font-black text-slate-400">0</p>
                     </div>
                 </div>
-                <!-- Barra de progresso -->
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill ${barClass}" style="width: ${perc}%"></div>
+            </div>
+        </div>
+
+        <div id="view-lista" class="max-w-2xl mx-auto">
+            <div id="lista-pessoas" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="empty-state" class="hidden text-center py-20 border-2 border-dashed border-slate-800 rounded-[3rem]">
+                <p class="text-slate-600 font-bold uppercase text-xs tracking-widest">Nenhum devedor encontrado</p>
+            </div>
+        </div>
+
+        <!-- TELA DETALHES -->
+        <div id="view-detalhes" class="max-w-md mx-auto hidden">
+            <button onclick="voltarParaLista()" class="mb-6 flex items-center gap-2 text-slate-500 hover:text-white font-bold text-xs uppercase transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Voltar
+            </button>
+
+            <div class="glass-card rounded-[2.5rem] overflow-hidden">
+                <div class="p-10 text-center bg-slate-900/60 relative">
+                    <button onclick="abrirModalMeta()" class="absolute top-6 right-6 p-2 text-slate-500 hover:text-white transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    </button>
+                    <!-- NOVO: badge de status -->
+                    <div class="mb-2"><span id="detalhe-badge" class="badge badge-aberta">Em aberto</span></div>
+                    <h2 id="detalhe-nome" class="text-xl font-black text-indigo-400 uppercase tracking-tighter mb-1">---</h2>
+                    <!-- NOVO: info de vencimento -->
+                    <p id="detalhe-venc-info" class="text-[10px] font-bold text-slate-500 mt-1 hidden"></p>
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Em aberto</span>
+                    <h1 id="detalhe-saldo" class="text-5xl font-black text-white mt-2 tracking-tighter">R$ 0,00</h1>
+                    <div class="mt-8 w-full bg-slate-800/40 rounded-full h-2 overflow-hidden">
+                        <div id="detalhe-barra" class="bg-indigo-500 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
                 </div>
-                <div class="flex justify-between text-[9px] font-bold mt-1 text-slate-600">
-                    <span>${fmtMoeda(totalPago)} recebido</span>
-                    <span>${Math.round(perc)}%</span>
+
+                <div class="p-6 border-y border-white/5 bg-slate-900/20 flex gap-2">
+                    <input type="number" id="input-pagamento" placeholder="Valor R$" step="0.01" class="flex-[2] bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white font-bold outline-none">
+                    <button onclick="lancarPagamento()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase rounded-xl transition-all">Lançar</button>
                 </div>
-            </div>`;
-        }).join('');
-    };
 
-    // ── Detalhes ─────────────────────────────────────────
-    window.verPessoa = (id) => {
-        pessoaAtivaId = id;
-        document.getElementById('view-lista').classList.add('hidden');
-        document.getElementById('view-detalhes').classList.remove('hidden');
-        atualizarViewDetalhes();
-    };
+                <div class="p-6">
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 text-center">Histórico de Recebimentos</h3>
+                    <div id="detalhe-historico" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div>
+                </div>
 
-    window.voltarParaLista = () => {
-        pessoaAtivaId = null;
-        document.getElementById('view-lista').classList.remove('hidden');
-        document.getElementById('view-detalhes').classList.add('hidden');
-    };
+                <div class="p-4 bg-slate-950/40 text-center">
+                    <button onclick="deletarPessoaAtual()" class="text-[9px] text-red-900 hover:text-red-500 font-black uppercase transition-colors">Excluir Registro</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    function atualizarViewDetalhes() {
-        const p = devedores.find(d => d.id === pessoaAtivaId);
-        if (!p) return;
+    <!-- MODAIS -->
+    <div id="modal-pessoa" class="modal">
+        <div class="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] w-full max-w-xs shadow-2xl">
+            <h2 class="text-white font-black text-xl mb-6 uppercase tracking-tight">Novo Devedor</h2>
+            <div class="space-y-4">
+                <input type="text" id="novo-nome" placeholder="Nome" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-bold outline-none">
+                <input type="number" id="novo-valor" placeholder="Dívida Total R$" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-bold outline-none">
+                <!-- NOVO: campo de vencimento -->
+                <div>
+                    <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">Data de Vencimento</p>
+                    <input type="date" id="novo-vencimento" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-bold outline-none">
+                </div>
+            </div>
+            <div class="flex gap-4 mt-8">
+                <button onclick="fecharModalPessoa()" class="flex-1 text-slate-500 font-bold text-xs uppercase">Cancelar</button>
+                <button onclick="salvarPessoa()" class="flex-1 py-4 bg-indigo-600 rounded-2xl text-white font-black text-xs uppercase">Salvar</button>
+            </div>
+        </div>
+    </div>
 
-        const totalPago = (p.pagamentos || []).reduce((a, pg) => a + pg.valor, 0);
-        const saldo     = Math.max(0, p.meta - totalPago);
-        const perc      = p.meta > 0 ? Math.min(100, (totalPago / p.meta) * 100) : 0;
-        const status    = statusDevedor(p);
+    <div id="modal-meta" class="modal">
+        <div class="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] w-full max-w-xs shadow-2xl">
+            <h2 class="text-white font-black text-xl mb-4 uppercase tracking-tight text-center">Editar Valor</h2>
+            <input type="number" id="edit-meta" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-black text-lg outline-none">
+            <!-- NOVO: editar vencimento -->
+            <div class="mt-4">
+                <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">Data de Vencimento</p>
+                <input type="date" id="edit-vencimento" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white font-bold outline-none">
+            </div>
+            <div class="flex gap-4 mt-8">
+                <button onclick="fecharModalMeta()" class="flex-1 text-slate-500 font-bold text-xs uppercase">Sair</button>
+                <button onclick="confirmarNovaMeta()" class="flex-1 py-4 bg-indigo-600 rounded-2xl text-white font-black text-xs uppercase">Atualizar</button>
+            </div>
+        </div>
+    </div>
 
-        // Badge
-        const badgeClass = { aberta: 'badge-aberta', parcial: 'badge-parcial', vencida: 'badge-vencida', quitada: 'badge-quitada' }[status];
-        const badgeLabel = { aberta: 'Em aberto', parcial: 'Parcialmente pago', vencida: 'Vencida', quitada: 'Quitada' }[status];
-        const badge = document.getElementById('detalhe-badge');
-        badge.className = `badge ${badgeClass}`;
-        badge.textContent = badgeLabel;
+    <!-- NOVO: Modal de confirmação de exclusão -->
+    <div id="modal-exclusao" class="modal" style="z-index: 200;">
+        <div class="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem] w-full max-w-xs shadow-2xl text-center">
+            <p class="text-2xl mb-3">🗑️</p>
+            <h2 class="text-white font-black text-lg mb-2 uppercase tracking-tight">Excluir registro?</h2>
+            <p id="modal-exclusao-nome" class="text-slate-400 text-sm mb-6"></p>
+            <div class="flex gap-3">
+                <button onclick="fecharModalExclusao()" class="flex-1 py-4 text-slate-500 font-bold text-xs uppercase">Cancelar</button>
+                <button onclick="confirmarExclusao()" class="flex-1 py-4 bg-red-600 hover:bg-red-500 rounded-2xl text-white font-black text-xs uppercase transition-all">Excluir</button>
+            </div>
+        </div>
+    </div>
 
-        document.getElementById('detalhe-nome').innerText = p.nome;
-        document.getElementById('detalhe-saldo').innerText = fmtMoeda(saldo);
+    <!-- NOVO: Toast -->
+    <div id="toast"></div>
 
-        // Vencimento
-        const vencInfo = document.getElementById('detalhe-vencimento-info');
-        const vencLabel = document.getElementById('detalhe-vencimento-label');
-        if (p.vencimento) {
-            vencInfo.classList.remove('hidden');
-            if (status === 'vencida') {
-                vencLabel.innerHTML = `<span class="text-red-400">⚠ Venceu em ${fmtData(p.vencimento)}</span>`;
-            } else if (status !== 'quitada') {
-                vencLabel.innerHTML = `<span class="text-slate-400">Vence em ${fmtData(p.vencimento)}</span>`;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHzkNkJK56L4d7ncVbZfjB9pCWacqF3Cc",
+            authDomain: "gestor-cobranca.firebaseapp.com",
+            projectId: "gestor-cobranca",
+            storageBucket: "gestor-cobranca.firebasestorage.app",
+            messagingSenderId: "553918891395",
+            appId: "1:553918891395:web:be2d2bcbbe13d33c8ee2b6"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        
+        let currentUser = null;
+        let devedores = [];
+        let pessoaAtivaId = null;
+        let unsubscribeSnapshot = null;
+        let pendingDeleteId = null;
+
+        // ── Utils ────────────────────────────────────────
+        function hoje() { return new Date().toISOString().split('T')[0]; }
+
+        function fmtData(str) {
+            if (!str) return null;
+            const [y, m, d] = str.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => el.classList.remove('show'), 2800);
+        }
+
+        function statusDevedor(p) {
+            const pago = (p.pagamentos || []).reduce((a, pg) => a + pg.valor, 0);
+            if (pago >= p.meta) return 'quitada';
+            if (p.vencimento && p.vencimento < hoje()) return 'vencida';
+            if (pago > 0) return 'parcial';
+            return 'aberta';
+        }
+
+        // ── Autenticação ─────────────────────────────────
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('view-auth').classList.add('hidden');
+                document.getElementById('view-app').classList.remove('hidden');
+                const userDisplay = document.getElementById('user-display');
+                const userPhoto = document.getElementById('user-photo');
+                userDisplay.innerText = user.displayName || user.email;
+                if(user.photoURL) {
+                    userPhoto.src = user.photoURL;
+                    userPhoto.classList.remove('hidden');
+                }
+                iniciarEscutaDados();
+            } else {
+                currentUser = null;
+                document.getElementById('view-auth').classList.remove('hidden');
+                document.getElementById('view-app').classList.add('hidden');
+                if (unsubscribeSnapshot) unsubscribeSnapshot();
+            }
+        });
+
+        window.fazerLoginGoogle = () => {
+            signInWithPopup(auth, provider).catch(err => alert("Falha no login: " + err.message));
+        };
+
+        window.fazerLogout = () => signOut(auth);
+
+        // ── Firestore ────────────────────────────────────
+        function iniciarEscutaDados() {
+            const colRef = collection(db, "users", currentUser.uid, "devedores");
+            unsubscribeSnapshot = onSnapshot(colRef, (snapshot) => {
+                devedores = [];
+                snapshot.forEach(doc => devedores.push({ id: doc.id, ...doc.data() }));
+                renderizarDashboard();
+                renderizarLista();
+                if (pessoaAtivaId) atualizarViewDetalhes();
+            });
+        }
+
+        const getPessoaDoc = (id) => doc(db, "users", currentUser.uid, "devedores", id);
+
+        // ── Dashboard ────────────────────────────────────
+        function renderizarDashboard() {
+            let aberto = 0, recebido = 0, vencidos = 0, quitados = 0;
+            devedores.forEach(p => {
+                const pago  = (p.pagamentos || []).reduce((a, pg) => a + pg.valor, 0);
+                const saldo = Math.max(0, p.meta - pago);
+                const st    = statusDevedor(p);
+                aberto   += saldo;
+                recebido += pago;
+                if (st === 'vencida') vencidos++;
+                if (st === 'quitada') quitados++;
+            });
+            document.getElementById('dash-aberto').textContent   = aberto.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('dash-recebido').textContent = recebido.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('dash-total').textContent    = devedores.length;
+            document.getElementById('dash-vencidos').textContent = vencidos;
+            document.getElementById('dash-quitados').textContent = quitados;
+        }
+
+        // ── Lista ────────────────────────────────────────
+        window.renderizarLista = () => {
+            const container = document.getElementById('lista-pessoas');
+            const empty = document.getElementById('empty-state');
+            if (devedores.length === 0) {
+                container.innerHTML = "";
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            // Ordenação: vencidos → parcial → aberta → quitada
+            const ordem = { vencida: 0, parcial: 1, aberta: 2, quitada: 3 };
+            const sorted = [...devedores].sort((a, b) => {
+                const diff = ordem[statusDevedor(a)] - ordem[statusDevedor(b)];
+                if (diff !== 0) return diff;
+                if (a.vencimento && b.vencimento) return a.vencimento.localeCompare(b.vencimento);
+                return 0;
+            });
+
+            container.innerHTML = sorted.map(p => {
+                const totalPago = (p.pagamentos || []).reduce((acc, pg) => acc + pg.valor, 0);
+                const saldo     = Math.max(0, p.meta - totalPago);
+                const perc      = p.meta > 0 ? Math.min(100, (totalPago / p.meta) * 100) : 0;
+                const st        = statusDevedor(p);
+
+                const badgeClass = { aberta:'badge-aberta', parcial:'badge-parcial', vencida:'badge-vencida', quitada:'badge-quitada' }[st];
+                const badgeLabel = { aberta:'Em aberto', parcial:'Parcial', vencida:'Vencida', quitada:'Quitada' }[st];
+                const barClass   = st === 'quitada' ? 'bar-quitada' : st === 'vencida' ? 'bar-vencida' : 'bar-normal';
+                const cardExtra  = st === 'vencida' ? 'card-vencida' : '';
+
+                const vencHtml = p.vencimento
+                    ? `<p class="text-[9px] font-bold mt-1 ${st === 'vencida' ? 'text-red-400' : 'text-slate-600'}">
+                          ${st === 'vencida' ? '⚠ Venceu em ' : 'Vence em '}${fmtData(p.vencimento)}
+                       </p>`
+                    : '';
+
+                return `
+                <div onclick="verPessoa('${p.id}')" class="glass-card ${cardExtra} p-6 rounded-[2rem] cursor-pointer hover:border-indigo-500/50 transition-all active:scale-95 group">
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="font-black text-white uppercase text-sm group-hover:text-indigo-400 truncate flex-1 mr-2">${p.nome}</h3>
+                        <span class="badge ${badgeClass} shrink-0">${badgeLabel}</span>
+                    </div>
+                    ${vencHtml}
+                    <div class="flex justify-between items-end mt-3">
+                        <div>
+                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Restante</p>
+                            <p class="text-xl font-black text-white">R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                        </div>
+                        <div class="bg-indigo-500/10 p-2 rounded-xl">
+                             <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                    </div>
+                    <!-- barra de progresso no card -->
+                    <div class="mini-progress-bg">
+                        <div class="mini-progress-fill ${barClass}" style="width:${perc}%"></div>
+                    </div>
+                    <div class="flex justify-between text-[9px] font-bold text-slate-600 mt-1">
+                        <span>R$ ${totalPago.toLocaleString('pt-BR', {minimumFractionDigits:2})} recebido</span>
+                        <span>${Math.round(perc)}%</span>
+                    </div>
+                </div>`;
+            }).join('');
+        };
+
+        window.verPessoa = (id) => {
+            pessoaAtivaId = id;
+            document.getElementById('view-lista').classList.add('hidden');
+            document.getElementById('view-detalhes').classList.remove('hidden');
+            atualizarViewDetalhes();
+        };
+
+        window.voltarParaLista = () => {
+            pessoaAtivaId = null;
+            document.getElementById('view-lista').classList.remove('hidden');
+            document.getElementById('view-detalhes').classList.add('hidden');
+        };
+
+        window.salvarPessoa = async () => {
+            const nome       = document.getElementById('novo-nome').value.trim();
+            const valor      = parseFloat(document.getElementById('novo-valor').value);
+            const vencimento = document.getElementById('novo-vencimento').value || null;
+            if (!nome || isNaN(valor)) return;
+            const id = Date.now().toString();
+            await setDoc(getPessoaDoc(id), { nome, meta: valor, vencimento, pagamentos: [], criadoEm: new Date().toISOString() });
+            fecharModalPessoa();
+            document.getElementById('novo-nome').value = "";
+            document.getElementById('novo-valor').value = "";
+            document.getElementById('novo-vencimento').value = "";
+            showToast('Devedor cadastrado!');
+        };
+
+        window.lancarPagamento = async () => {
+            const input = document.getElementById('input-pagamento');
+            const valor = parseFloat(input.value);
+            if (isNaN(valor) || valor <= 0) return;
+            const p = devedores.find(d => d.id === pessoaAtivaId);
+            const novos = [...(p.pagamentos || []), { valor, data: new Date().toLocaleString('pt-BR') }];
+            await updateDoc(getPessoaDoc(pessoaAtivaId), { pagamentos: novos });
+            input.value = "";
+            showToast('Pagamento lançado!');
+        };
+
+        window.removerPagamento = async (idx) => {
+            const p = devedores.find(d => d.id === pessoaAtivaId);
+            const novos = [...p.pagamentos];
+            novos.splice(idx, 1);
+            await updateDoc(getPessoaDoc(pessoaAtivaId), { pagamentos: novos });
+            showToast('Pagamento removido');
+        };
+
+        // Exclusão com modal ao invés de confirm()
+        window.deletarPessoaAtual = () => {
+            const p = devedores.find(d => d.id === pessoaAtivaId);
+            if (!p) return;
+            pendingDeleteId = pessoaAtivaId;
+            document.getElementById('modal-exclusao-nome').textContent = `"${p.nome}" — esta ação não pode ser desfeita.`;
+            document.getElementById('modal-exclusao').classList.add('active');
+        };
+
+        window.fecharModalExclusao = () => {
+            pendingDeleteId = null;
+            document.getElementById('modal-exclusao').classList.remove('active');
+        };
+
+        window.confirmarExclusao = async () => {
+            if (!pendingDeleteId) return;
+            const id = pendingDeleteId;
+            fecharModalExclusao();
+            await deleteDoc(getPessoaDoc(id));
+            voltarParaLista();
+            showToast('Registro excluído');
+        };
+
+        window.confirmarNovaMeta = async () => {
+            const v    = parseFloat(document.getElementById('edit-meta').value);
+            const venc = document.getElementById('edit-vencimento').value || null;
+            if (!isNaN(v)) {
+                await updateDoc(getPessoaDoc(pessoaAtivaId), { meta: v, vencimento: venc });
+                fecharModalMeta();
+                showToast('Dados atualizados!');
+            }
+        };
+
+        function atualizarViewDetalhes() {
+            const p = devedores.find(d => d.id === pessoaAtivaId);
+            if (!p) return;
+            const totalPago = (p.pagamentos || []).reduce((acc, pg) => acc + pg.valor, 0);
+            const saldo = Math.max(0, p.meta - totalPago);
+            const perc  = p.meta > 0 ? (totalPago / p.meta) * 100 : 0;
+            const st    = statusDevedor(p);
+
+            // Badge
+            const badgeEl    = document.getElementById('detalhe-badge');
+            const badgeClass = { aberta:'badge-aberta', parcial:'badge-parcial', vencida:'badge-vencida', quitada:'badge-quitada' }[st];
+            const badgeLabel = { aberta:'Em aberto', parcial:'Parcialmente pago', vencida:'Vencida', quitada:'Quitada' }[st];
+            badgeEl.className   = `badge ${badgeClass}`;
+            badgeEl.textContent = badgeLabel;
+
+            // Vencimento
+            const vencInfo = document.getElementById('detalhe-venc-info');
+            if (p.vencimento && st !== 'quitada') {
+                vencInfo.classList.remove('hidden');
+                vencInfo.innerHTML = st === 'vencida'
+                    ? `<span class="text-red-400">⚠ Venceu em ${fmtData(p.vencimento)}</span>`
+                    : `Vence em ${fmtData(p.vencimento)}`;
             } else {
                 vencInfo.classList.add('hidden');
             }
-        } else {
-            vencInfo.classList.add('hidden');
+
+            document.getElementById('detalhe-nome').innerText = p.nome;
+            document.getElementById('detalhe-saldo').innerText = `R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('detalhe-barra').style.width = `${perc}%`;
+
+            const container = document.getElementById('detalhe-historico');
+            container.innerHTML = [...(p.pagamentos || [])].reverse().map((pg, i) => {
+                const realIdx = p.pagamentos.length - 1 - i;
+                return `<div class="flex justify-between items-center bg-slate-800/40 p-4 rounded-xl mb-2 border border-white/5">
+                    <div><p class="text-[8px] text-slate-500 font-bold">${pg.data}</p><p class="text-white font-black text-sm">R$ ${pg.valor.toFixed(2)}</p></div>
+                    <button onclick="removerPagamento(${realIdx})" class="text-slate-700 hover:text-red-500 transition-colors">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>`;
+            }).join('') || `<p class="text-center text-slate-700 text-[10px] py-6 font-bold uppercase">Sem registros</p>`;
         }
 
-        // Barra de progresso
-        const barra = document.getElementById('detalhe-barra');
-        barra.style.width = `${perc}%`;
-        barra.className = 'h-full rounded-full transition-all duration-1000 ' +
-            (status === 'quitada' ? 'progress-fill-quitada'
-           : status === 'vencida'  ? 'progress-fill-vencida'
-           : 'progress-fill-normal');
+        window.abrirModalPessoa  = () => document.getElementById('modal-pessoa').classList.add('active');
+        window.fecharModalPessoa = () => document.getElementById('modal-pessoa').classList.remove('active');
 
-        document.getElementById('detalhe-perc').textContent = `${Math.round(perc)}%`;
-        document.getElementById('detalhe-recebido-valor').textContent = `${fmtMoeda(totalPago)} recebido`;
-        document.getElementById('detalhe-total-valor').textContent = `de ${fmtMoeda(p.meta)}`;
+        window.abrirModalMeta = () => {
+            const p = devedores.find(d => d.id === pessoaAtivaId);
+            document.getElementById('edit-meta').value       = p.meta;
+            document.getElementById('edit-vencimento').value = p.vencimento || '';
+            document.getElementById('modal-meta').classList.add('active');
+        };
+        window.fecharModalMeta = () => document.getElementById('modal-meta').classList.remove('active');
 
-        // Histórico
-        const container = document.getElementById('detalhe-historico');
-        container.innerHTML = [...(p.pagamentos || [])].reverse().map((pg, i) => {
-            const realIdx = p.pagamentos.length - 1 - i;
-            return `<div class="flex justify-between items-center bg-slate-800/40 p-4 rounded-xl mb-2 border border-white/5">
-                <div>
-                    <p class="text-[8px] text-slate-500 font-bold">${pg.data}</p>
-                    <p class="text-white font-black text-sm">${fmtMoeda(pg.valor)}</p>
-                </div>
-                <button onclick="removerPagamento(${realIdx})" class="text-slate-700 hover:text-red-500 transition-colors" title="Remover">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
-            </div>`;
-        }).join('') || `<p class="text-center text-slate-700 text-[10px] py-6 font-bold uppercase">Sem registros</p>`;
-    }
-
-    // ── CRUD ─────────────────────────────────────────────
-    window.salvarPessoa = async () => {
-        const nome       = document.getElementById('novo-nome').value.trim();
-        const valor      = parseFloat(document.getElementById('novo-valor').value);
-        const vencimento = document.getElementById('novo-vencimento').value || null;
-
-        if (!nome)           { showToast('Digite o nome do devedor'); return; }
-        if (isNaN(valor) || valor <= 0) { showToast('Digite um valor válido'); return; }
-
-        const id = Date.now().toString();
-        await setDoc(getPessoaDoc(id), {
-            nome,
-            meta: valor,
-            vencimento,
-            pagamentos: [],
-            criadoEm: new Date().toISOString()
+        // Fechar modais clicando fora
+        document.querySelectorAll('.modal').forEach(m => {
+            m.addEventListener('click', (e) => {
+                if (e.target === m) {
+                    m.classList.remove('active');
+                    if (m.id === 'modal-exclusao') pendingDeleteId = null;
+                }
+            });
         });
-        fecharModalPessoa();
-        document.getElementById('novo-nome').value      = "";
-        document.getElementById('novo-valor').value     = "";
-        document.getElementById('novo-vencimento').value = "";
-        showToast('Devedor cadastrado!');
-    };
-
-    window.lancarPagamento = async () => {
-        const input = document.getElementById('input-pagamento');
-        const valor = parseFloat(input.value);
-        if (isNaN(valor) || valor <= 0) { showToast('Digite um valor válido'); return; }
-
-        const p = devedores.find(d => d.id === pessoaAtivaId);
-        const saldoAtual = Math.max(0, p.meta - (p.pagamentos || []).reduce((a, pg) => a + pg.valor, 0));
-        if (valor > saldoAtual + 0.001) { showToast(`Valor maior que o saldo em aberto (${fmtMoeda(saldoAtual)})`); return; }
-
-        const novos = [...(p.pagamentos || []), { valor, data: new Date().toLocaleString('pt-BR') }];
-        await updateDoc(getPessoaDoc(pessoaAtivaId), { pagamentos: novos });
-        input.value = "";
-        showToast('Pagamento lançado!');
-    };
-
-    window.removerPagamento = async (idx) => {
-        const p    = devedores.find(d => d.id === pessoaAtivaId);
-        const novos = [...p.pagamentos];
-        novos.splice(idx, 1);
-        await updateDoc(getPessoaDoc(pessoaAtivaId), { pagamentos: novos });
-        showToast('Pagamento removido');
-    };
-
-    window.confirmarNovaMeta = async () => {
-        const v    = parseFloat(document.getElementById('edit-meta').value);
-        const venc = document.getElementById('edit-vencimento').value || null;
-        if (isNaN(v) || v <= 0) { showToast('Digite um valor válido'); return; }
-        await updateDoc(getPessoaDoc(pessoaAtivaId), { meta: v, vencimento: venc });
-        fecharModalMeta();
-        showToast('Dados atualizados!');
-    };
-
-    // ── Exclusão com modal de confirmação ────────────────
-    window.deletarPessoaAtual = () => {
-        const p = devedores.find(d => d.id === pessoaAtivaId);
-        if (!p) return;
-        pendingDeleteId = pessoaAtivaId;
-        document.getElementById('modal-exclusao-nome').textContent = `"${p.nome}" — esta ação não pode ser desfeita.`;
-        document.getElementById('modal-confirmar-exclusao').classList.add('active');
-    };
-
-    window.fecharModalExclusao = () => {
-        pendingDeleteId = null;
-        document.getElementById('modal-confirmar-exclusao').classList.remove('active');
-    };
-
-    window.confirmarExclusao = async () => {
-        if (!pendingDeleteId) return;
-        const id = pendingDeleteId;
-        fecharModalExclusao();
-        await deleteDoc(getPessoaDoc(id));
-        voltarParaLista();
-        showToast('Registro excluído');
-    };
-
-    // ── Modais ───────────────────────────────────────────
-    window.abrirModalPessoa = () => document.getElementById('modal-pessoa').classList.add('active');
-    window.fecharModalPessoa = () => document.getElementById('modal-pessoa').classList.remove('active');
-
-    window.abrirModalMeta = () => {
-        const p = devedores.find(d => d.id === pessoaAtivaId);
-        document.getElementById('edit-meta').value       = p.meta;
-        document.getElementById('edit-vencimento').value = p.vencimento || '';
-        document.getElementById('modal-meta').classList.add('active');
-    };
-    window.fecharModalMeta = () => document.getElementById('modal-meta').classList.remove('active');
-
-    // Fechar modais clicando fora
-    document.querySelectorAll('.modal').forEach(m => {
-        m.addEventListener('click', (e) => {
-            if (e.target === m) {
-                m.classList.remove('active');
-                if (m.id === 'modal-confirmar-exclusao') pendingDeleteId = null;
-            }
-        });
-    });
-</script>
+    </script>
 </body>
 </html>
