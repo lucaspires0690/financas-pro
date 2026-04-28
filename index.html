@@ -7,84 +7,54 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-
         * { font-family: 'Inter', sans-serif; }
         body { background-color: #0f172a; color: #f1f5f9; }
-
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: flex-end; justify-content: center; padding: 0; }
+        .glass-card { background: rgba(30,41,59,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal.active { display: flex; }
         .modal-box { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 2rem 2rem 0 0; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; padding: 1.75rem; }
-
         .btn-google { background: white; color: #1f2937; transition: all 0.2s; }
         .btn-google:hover { background: #f3f4f6; transform: translateY(-2px); }
-
-        /* Toggle radio style */
         .toggle-pill { display: flex; background: rgba(15,23,42,0.8); border-radius: 0.75rem; padding: 3px; gap: 3px; }
         .toggle-pill button { flex: 1; padding: 8px 0; border-radius: 0.6rem; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.15s; border: none; cursor: pointer; background: transparent; color: #64748b; }
         .toggle-pill button.active { background: #4f46e5; color: white; }
-
-        /* Input estilo */
         .inp { width: 100%; background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 0.85rem; padding: 14px 16px; color: white; font-weight: 700; font-size: 0.95rem; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
         .inp:focus { border-color: #4f46e5; }
         .inp::placeholder { color: #475569; font-weight: 400; }
         .inp-label { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; margin-bottom: 5px; display: block; }
-
-        /* Scrollbar */
+        .inp-money-wrap { position: relative; }
+        .inp-money-wrap .prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 900; font-size: 0.9rem; pointer-events: none; user-select: none; }
+        .inp-money-wrap .inp { padding-left: 38px; }
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-
-        /* Animações */
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
         .fade-up { animation: fadeUp 0.25s ease-out; }
-
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
         .modal.active .modal-box { animation: slideUp 0.22s ease-out; }
-
-        /* Progress bar */
-        .prog-bar { width: 100%; background: rgba(255,255,255,0.06); border-radius: 9999px; height: 6px; overflow: hidden; }
-        .prog-fill { height: 100%; border-radius: 9999px; transition: width 0.8s ease; }
-
-        /* Badge status */
-        .badge { font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.07em; padding: 3px 8px; border-radius: 9999px; }
-        .badge-pagar   { background: rgba(239,68,68,0.15);  color: #f87171; }
-        .badge-receber { background: rgba(16,185,129,0.15); color: #34d399; }
-        .badge-vencida { background: rgba(239,68,68,0.25);  color: #ef4444; }
-        .badge-parcial { background: rgba(245,158,11,0.15); color: #fbbf24; }
-        .badge-quitada { background: rgba(100,116,139,0.2); color: #64748b; }
-
-        /* Select */
-        select.inp { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; appearance: none; cursor: pointer; }
-        option { background: #1e293b; }
-
-        /* Disabled */
-        .disabled-btn { opacity: 0.4; pointer-events: none; }
-
-        /* Toast */
-        #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; padding: 10px 20px; font-size: 0.8rem; font-weight: 700; z-index: 999; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.2s; pointer-events: none; }
-        #toast.show { opacity: 1; }
-
-        /* Card de conta */
-        .conta-card { transition: all 0.15s; }
-        .conta-card:hover { border-color: rgba(99,102,241,0.4) !important; }
-        .conta-card:active { transform: scale(0.98); }
-
-        /* Vencida destaque */
-        .borda-vencida { border-left: 3px solid #ef4444 !important; }
-        .borda-parcial  { border-left: 3px solid #f59e0b !important; }
+        .prog-bar { width:100%; background:rgba(255,255,255,0.06); border-radius:9999px; height:6px; overflow:hidden; }
+        .prog-fill { height:100%; border-radius:9999px; transition:width 0.8s ease; }
+        .badge { font-size:0.6rem; font-weight:900; text-transform:uppercase; letter-spacing:0.07em; padding:3px 8px; border-radius:9999px; }
+        .badge-pagar   { background:rgba(239,68,68,0.15);  color:#f87171; }
+        .badge-receber { background:rgba(16,185,129,0.15); color:#34d399; }
+        .badge-vencida { background:rgba(239,68,68,0.25);  color:#ef4444; }
+        .badge-parcial { background:rgba(245,158,11,0.15); color:#fbbf24; }
+        .badge-quitada { background:rgba(100,116,139,0.2); color:#64748b; }
+        select.inp { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; appearance:none; cursor:pointer; }
+        option { background:#1e293b; }
+        .disabled-btn { opacity:0.4; pointer-events:none; }
+        #toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1e293b; border:1px solid rgba(255,255,255,0.1); border-radius:9999px; padding:10px 20px; font-size:0.8rem; font-weight:700; z-index:999; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,0.5); opacity:0; transition:opacity 0.2s; pointer-events:none; }
+        #toast.show { opacity:1; }
+        .conta-card { transition:all 0.15s; }
+        .conta-card:hover { border-color:rgba(99,102,241,0.4) !important; }
+        .conta-card:active { transform:scale(0.98); }
+        .borda-vencida { border-left:3px solid #ef4444 !important; }
+        .borda-parcial  { border-left:3px solid #f59e0b !important; }
     </style>
 </head>
 <body class="min-h-screen">
 
-<!-- ══════════════════════════════════════
-     LOGIN
-════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="view-auth" class="min-h-screen flex items-center justify-center p-6">
     <div class="w-full max-w-sm text-center">
         <div class="mb-10">
@@ -106,15 +76,11 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     APP
-════════════════════════════════════════ -->
+<!-- APP -->
 <div id="view-app" class="hidden">
 
-    <!-- ── TELA: LISTA ── -->
+    <!-- LISTA -->
     <div id="view-lista" class="p-4 md:p-6 max-w-2xl mx-auto pb-28">
-
-        <!-- Header -->
         <div class="flex justify-between items-start mb-6 pt-2">
             <div>
                 <h1 class="text-3xl font-black tracking-tighter">FluxoCaixa</h1>
@@ -124,7 +90,7 @@
                 </div>
             </div>
             <div class="flex gap-2 items-center">
-                <button id="btn-logout" title="Sair" class="p-3 text-slate-500 hover:text-red-500 transition-all">
+                <button id="btn-logout" class="p-3 text-slate-500 hover:text-red-500 transition-all">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 </button>
                 <button id="btn-nova" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-2xl transition-all shadow-lg shadow-indigo-600/20">
@@ -133,41 +99,35 @@
             </div>
         </div>
 
-        <!-- Dashboard resumo -->
+        <!-- Dashboard SEM saldo líquido -->
         <div class="glass-card rounded-[2rem] p-5 mb-5">
-            <div class="grid grid-cols-3 gap-3 mb-4">
-                <div class="text-center">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Saldo</p>
-                    <p id="dash-saldo" class="text-base font-black text-white leading-tight">R$ 0</p>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-red-950/30 border border-red-900/20 rounded-2xl p-4 text-center">
+                    <p class="text-[9px] font-black text-red-900 uppercase tracking-widest mb-1">📤 A Pagar</p>
+                    <p id="dash-pagar" class="text-xl font-black text-red-400 leading-tight">R$ 0,00</p>
                 </div>
-                <div class="text-center border-x border-white/5">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">A Pagar</p>
-                    <p id="dash-pagar" class="text-base font-black text-red-400 leading-tight">R$ 0</p>
-                </div>
-                <div class="text-center">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">A Receber</p>
-                    <p id="dash-receber" class="text-base font-black text-emerald-400 leading-tight">R$ 0</p>
+                <div class="bg-emerald-950/30 border border-emerald-900/20 rounded-2xl p-4 text-center">
+                    <p class="text-[9px] font-black text-emerald-900 uppercase tracking-widest mb-1">📥 A Receber</p>
+                    <p id="dash-receber" class="text-xl font-black text-emerald-400 leading-tight">R$ 0,00</p>
                 </div>
             </div>
             <div class="flex gap-3">
                 <div class="flex-1 bg-slate-900/60 rounded-xl p-2 text-center">
                     <p class="text-[8px] font-black text-red-900 uppercase tracking-widest">⚠ Vencido</p>
-                    <p id="dash-vencido" class="text-xs font-black text-red-500 mt-0.5">R$ 0</p>
+                    <p id="dash-vencido" class="text-xs font-black text-red-500 mt-0.5">R$ 0,00</p>
                 </div>
                 <div class="flex-1 bg-slate-900/60 rounded-xl p-2 text-center">
-                    <p class="text-[8px] font-black text-slate-600 uppercase tracking-widest">📅 7 dias</p>
-                    <p id="dash-7dias" class="text-xs font-black text-amber-400 mt-0.5">R$ 0</p>
+                    <p class="text-[8px] font-black text-slate-600 uppercase tracking-widest">📅 Vence 7 dias</p>
+                    <p id="dash-7dias" class="text-xs font-black text-amber-400 mt-0.5">R$ 0,00</p>
                 </div>
             </div>
         </div>
 
-        <!-- Tabs -->
         <div class="toggle-pill mb-4">
             <button id="tab-pagar" class="active" onclick="setTab('pagar')">📤 A Pagar</button>
             <button id="tab-receber" onclick="setTab('receber')">📥 A Receber</button>
         </div>
 
-        <!-- Lista de contas -->
         <div id="lista-contas" class="space-y-3"></div>
         <div id="empty-state" class="hidden text-center py-20 border-2 border-dashed border-slate-800 rounded-[2rem] mt-2">
             <p class="text-slate-600 font-black text-xs uppercase tracking-widest">Nenhuma conta cadastrada</p>
@@ -175,64 +135,54 @@
         </div>
     </div>
 
-    <!-- ── TELA: DETALHES ── -->
+    <!-- DETALHES -->
     <div id="view-detalhes" class="hidden p-4 md:p-6 max-w-md mx-auto pb-10">
-
-        <!-- Voltar -->
         <button id="btn-voltar" class="mb-5 flex items-center gap-2 text-slate-500 hover:text-white font-bold text-xs uppercase transition-all pt-2">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             Voltar
         </button>
-
         <div class="glass-card rounded-[2.5rem] overflow-hidden">
-
-            <!-- Cabeçalho do detalhe -->
             <div class="p-8 text-center bg-slate-900/60 relative">
+                <button id="btn-editar-conta" class="absolute top-5 right-5 p-2 text-slate-500 hover:text-indigo-400 transition-all" title="Editar conta">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                </button>
                 <div id="det-badges" class="flex justify-center gap-2 mb-3 flex-wrap"></div>
                 <h2 id="det-nome" class="text-xl font-black text-indigo-400 uppercase tracking-tighter mb-0.5">---</h2>
                 <p id="det-obs" class="text-[10px] text-slate-500 mb-2"></p>
                 <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Restante</span>
                 <h1 id="det-restante" class="text-5xl font-black text-white mt-1 tracking-tighter">R$ 0,00</h1>
                 <p id="det-total-label" class="text-xs text-slate-600 mt-1"></p>
-                <div class="mt-6 prog-bar">
-                    <div id="det-barra" class="prog-fill bg-indigo-500" style="width:0%"></div>
-                </div>
+                <div class="mt-6 prog-bar"><div id="det-barra" class="prog-fill bg-indigo-500" style="width:0%"></div></div>
                 <p id="det-perc" class="text-[10px] text-slate-600 mt-1 font-bold">0% pago</p>
             </div>
 
-            <!-- Parcelas (só parcelado) -->
             <div id="det-parcelas-wrap" class="hidden border-t border-white/5">
-                <div class="p-4 pb-2">
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center mb-3">Parcelas</p>
-                </div>
-                <div id="det-parcelas-lista" class="px-4 pb-2 space-y-2 max-h-60 overflow-y-auto"></div>
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center pt-4 pb-2">Parcelas</p>
+                <div id="det-parcelas-lista" class="px-4 pb-3 space-y-2 max-h-60 overflow-y-auto"></div>
             </div>
 
-            <!-- Lançar pagamento -->
             <div class="p-5 border-t border-white/5 bg-slate-900/20">
                 <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center mb-3">Lançar Pagamento / Recebimento</p>
-
-                <!-- Para parcelado: escolher parcela -->
                 <div id="sel-parcela-wrap" class="hidden mb-3">
                     <label class="inp-label">Parcela</label>
                     <select id="sel-parcela" class="inp"></select>
                 </div>
-
                 <div class="flex gap-2">
-                    <input type="number" id="input-valor-pag" placeholder="Valor R$" step="0.01" class="inp flex-1" style="padding: 12px 14px;">
+                    <div class="inp-money-wrap flex-1">
+                        <span class="prefix">R$</span>
+                        <input type="text" id="input-valor-pag" placeholder="0,00" class="inp" inputmode="numeric">
+                    </div>
                     <button id="btn-quitar-total" class="bg-slate-700 hover:bg-slate-600 text-white font-black text-[9px] uppercase rounded-2xl px-3 transition-all whitespace-nowrap">Max</button>
                     <button id="btn-lancar-pag" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase rounded-2xl px-4 transition-all">Lançar</button>
                 </div>
-                <div id="hint-pag" class="text-[10px] text-slate-600 mt-1 text-center font-bold"></div>
+                <div id="hint-pag" class="text-[10px] text-slate-600 mt-1.5 text-center font-bold"></div>
             </div>
 
-            <!-- Histórico -->
             <div class="p-5 border-t border-white/5">
                 <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center mb-4">Histórico de Pagamentos</p>
                 <div id="det-historico" class="space-y-2 max-h-60 overflow-y-auto"></div>
             </div>
 
-            <!-- Excluir -->
             <div class="p-4 bg-slate-950/40 text-center border-t border-white/5">
                 <button id="btn-excluir-conta" class="text-[9px] text-red-900 hover:text-red-500 font-black uppercase transition-colors">Excluir Registro</button>
             </div>
@@ -240,18 +190,14 @@
     </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     MODAL: NOVA CONTA
-════════════════════════════════════════ -->
+<!-- MODAL: NOVA CONTA -->
 <div id="modal-nova" class="modal">
     <div class="modal-box">
         <div class="flex justify-between items-center mb-5">
             <h2 class="text-white font-black text-lg uppercase tracking-tight">Nova Conta</h2>
-            <button onclick="fecharModal('modal-nova')" class="text-slate-600 hover:text-white text-xl font-bold transition-all">✕</button>
+            <button onclick="fecharModal('modal-nova')" class="text-slate-600 hover:text-white text-xl font-bold">✕</button>
         </div>
-
         <div class="space-y-4">
-            <!-- Tipo -->
             <div>
                 <label class="inp-label">Tipo</label>
                 <div class="toggle-pill">
@@ -259,20 +205,17 @@
                     <button id="ntipo-receber" onclick="setNovoTipo('receber')">📥 A Receber</button>
                 </div>
             </div>
-
-            <!-- Descrição -->
             <div>
                 <label class="inp-label">Descrição</label>
                 <input id="n-descricao" type="text" class="inp" placeholder="Ex: Aluguel, Nota fiscal...">
             </div>
-
-            <!-- Valor total -->
             <div>
-                <label class="inp-label">Valor Total (R$)</label>
-                <input id="n-valor" type="number" class="inp" placeholder="0,00" step="0.01" min="0.01">
+                <label class="inp-label">Valor Total</label>
+                <div class="inp-money-wrap">
+                    <span class="prefix">R$</span>
+                    <input id="n-valor" type="text" class="inp" placeholder="0,00" inputmode="numeric">
+                </div>
             </div>
-
-            <!-- Modalidade -->
             <div>
                 <label class="inp-label">Modalidade</label>
                 <div class="toggle-pill">
@@ -281,14 +224,10 @@
                     <button id="nmod-prazo" onclick="setNovaModal('prazo')">Prazo Livre</button>
                 </div>
             </div>
-
-            <!-- Vencimento (à vista / prazo) -->
             <div id="campo-venc">
                 <label class="inp-label">Data de Vencimento</label>
-                <input id="n-vencimento" type="text" class="inp" placeholder="DD/MM/AAAA" maxlength="10">
+                <input id="n-vencimento" type="text" class="inp" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric">
             </div>
-
-            <!-- Parcelado -->
             <div id="campo-parc" class="hidden space-y-3">
                 <div>
                     <label class="inp-label">Número de Parcelas</label>
@@ -301,17 +240,14 @@
                 </div>
                 <div>
                     <label class="inp-label">Vencimento da 1ª Parcela</label>
-                    <input id="n-primeira-parc" type="text" class="inp" placeholder="DD/MM/AAAA" maxlength="10">
+                    <input id="n-primeira-parc" type="text" class="inp" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric">
                 </div>
             </div>
-
-            <!-- Observação -->
             <div>
                 <label class="inp-label">Observação (opcional)</label>
                 <input id="n-obs" type="text" class="inp" placeholder="Ex: Referente a março...">
             </div>
         </div>
-
         <div class="flex gap-3 mt-6">
             <button onclick="fecharModal('modal-nova')" class="flex-1 text-slate-500 font-bold text-xs uppercase py-3">Cancelar</button>
             <button id="btn-salvar-conta" onclick="salvarConta()" class="flex-[2] py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-white font-black text-sm uppercase transition-all">Salvar</button>
@@ -319,597 +255,538 @@
     </div>
 </div>
 
-<!-- Toast -->
+<!-- MODAL: EDITAR CONTA -->
+<div id="modal-editar" class="modal">
+    <div class="modal-box">
+        <div class="flex justify-between items-center mb-5">
+            <h2 class="text-white font-black text-lg uppercase tracking-tight">Editar Conta</h2>
+            <button onclick="fecharModal('modal-editar')" class="text-slate-600 hover:text-white text-xl font-bold">✕</button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="inp-label">Tipo</label>
+                <div class="toggle-pill">
+                    <button id="etipo-pagar" class="active" onclick="setEditTipo('pagar')">📤 A Pagar</button>
+                    <button id="etipo-receber" onclick="setEditTipo('receber')">📥 A Receber</button>
+                </div>
+            </div>
+            <div>
+                <label class="inp-label">Descrição</label>
+                <input id="e-descricao" type="text" class="inp" placeholder="Descrição da conta">
+            </div>
+            <div>
+                <label class="inp-label">Observação</label>
+                <input id="e-obs" type="text" class="inp" placeholder="Opcional...">
+            </div>
+            <div>
+                <label class="inp-label">Datas de Vencimento</label>
+                <div id="e-parcelas-lista" class="space-y-2 max-h-56 overflow-y-auto"></div>
+                <p class="text-[10px] text-slate-600 mt-2">Parcelas já pagas não são editáveis.</p>
+            </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button onclick="fecharModal('modal-editar')" class="flex-1 text-slate-500 font-bold text-xs uppercase py-3">Cancelar</button>
+            <button id="btn-salvar-edicao" class="flex-[2] py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl text-white font-black text-sm uppercase transition-all">Salvar</button>
+        </div>
+    </div>
+</div>
+
 <div id="toast"></div>
 
-<!-- ══════════════════════════════════════
-     FIREBASE + LÓGICA
-════════════════════════════════════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// ── Firebase ─────────────────────────────────────────
-const app = initializeApp({
-    apiKey: "AIzaSyCHzkNkJK56L4d7ncVbZfjB9pCWacqF3Cc",
-    authDomain: "gestor-cobranca.firebaseapp.com",
-    projectId: "gestor-cobranca",
-    storageBucket: "gestor-cobranca.firebasestorage.app",
-    messagingSenderId: "553918891395",
-    appId: "1:553918891395:web:be2d2bcbbe13d33c8ee2b6"
+const app  = initializeApp({
+    apiKey:"AIzaSyCHzkNkJK56L4d7ncVbZfjB9pCWacqF3Cc",
+    authDomain:"gestor-cobranca.firebaseapp.com",
+    projectId:"gestor-cobranca",
+    storageBucket:"gestor-cobranca.firebasestorage.app",
+    messagingSenderId:"553918891395",
+    appId:"1:553918891395:web:be2d2bcbbe13d33c8ee2b6"
 });
 const auth = getAuth(app);
 const db   = getFirestore(app);
 const prov = new GoogleAuthProvider();
 
-// ── Estado ───────────────────────────────────────────
-const S = {
-    user: null,
-    contas: [],
-    tabAtiva: 'pagar',
-    contaAtivaId: null,
-    novoTipo: 'pagar',
-    novaModal: 'avista',
-    unsub: null,
-};
+const S = { user:null, contas:[], tabAtiva:'pagar', contaAtivaId:null, novoTipo:'pagar', novaModal:'avista', editTipo:'pagar', unsub:null };
 
 // ── Utils ─────────────────────────────────────────────
-const fmt = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const $ = id => document.getElementById(id);
+const fmt = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const $   = id => document.getElementById(id);
 
+function hojeISO() { return new Date().toISOString().split('T')[0]; }
 function hoje() {
-    const d = new Date();
+    const d=new Date();
     return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 }
-
-// Converte DD/MM/AAAA → AAAA-MM-DD (para comparação)
-function parseDMY(str) {
-    if (!str) return '';
-    const p = str.split('/');
-    if (p.length !== 3) return '';
+function parseDMY(s) {
+    if (!s) return '';
+    const p=s.split('/');
+    if (p.length!==3||p[2].length<4) return '';
     return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
 }
-
-// Formata AAAA-MM-DD → DD/MM/AAAA
-function fmtData(str) {
-    if (!str) return '—';
-    if (str.includes('/')) return str; // já está no formato certo
-    const [y,m,d] = str.split('-');
+function fmtData(s) {
+    if (!s) return '—';
+    if (s.includes('/')) return s;
+    const [y,m,d]=s.split('-');
     return `${d}/${m}/${y}`;
 }
 
-// Aplica máscara de data ao digitar
-function maskData(input) {
-    input.addEventListener('input', function() {
-        let v = this.value.replace(/\D/g,'').slice(0,8);
-        if (v.length > 4) v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
-        else if (v.length > 2) v = v.slice(0,2)+'/'+v.slice(2);
-        this.value = v;
+// ── Máscara data DD/MM/AAAA ───────────────────────────
+function maskData(el) {
+    el.addEventListener('input', function() {
+        let v=this.value.replace(/\D/g,'').slice(0,8);
+        if (v.length>4) v=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+        else if (v.length>2) v=v.slice(0,2)+'/'+v.slice(2);
+        this.value=v;
     });
 }
 
-function hojeISO() {
-    return new Date().toISOString().split('T')[0];
+// ── Máscara moeda ─────────────────────────────────────
+// Digitar "15000" → "150,00" | "15090" → "150,90"
+// Tudo em centavos: último 2 dígitos = centavos
+function maskMoeda(el) {
+    el.addEventListener('input', function() {
+        let digits = this.value.replace(/\D/g,'');
+        if (!digits) { this.value=''; return; }
+        // Remove zeros à esquerda
+        digits = digits.replace(/^0+/,'') || '0';
+        // Centavos = últimos 2; reais = resto
+        let cents = digits.length>=2 ? digits.slice(-2) : digits.padStart(2,'0');
+        let reais  = digits.length>2  ? digits.slice(0,-2) : '0';
+        // Milhar
+        reais = reais.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+        this.value = reais+','+cents;
+    });
+    el.addEventListener('blur', function() {
+        if (!this.value) return;
+        // Se não tem vírgula, o usuário pode ter colado um número inteiro; adiciona ,00
+        if (!this.value.includes(',')) {
+            const n = parseInt(this.value.replace(/\D/g,''));
+            if (!isNaN(n)) this.value = n.toLocaleString('pt-BR')+',00';
+        }
+    });
 }
 
-function estaVencida(vencISO) {
-    return vencISO && vencISO < hojeISO();
+// "1.234,56" → 1234.56
+function parseMoeda(s) {
+    if (!s) return NaN;
+    return parseFloat(s.replace(/\./g,'').replace(',','.'));
 }
 
-function toast(msg, ms = 2500) {
-    const el = $('toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => el.classList.remove('show'), ms);
+// Preenche campo mascarado com valor numérico
+function setMoeda(el, val) {
+    const s = val.toFixed(2); // "1234.56"
+    const [r,c] = s.split('.');
+    const reais = parseInt(r).toLocaleString('pt-BR');
+    el.value = reais+','+c;
 }
 
-function setLoad(btnId, on) {
-    const b = $(btnId);
-    if (on) b.classList.add('disabled-btn');
-    else b.classList.remove('disabled-btn');
+function toast(msg, ms=2500) {
+    const el=$('toast'); el.textContent=msg; el.classList.add('show');
+    clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),ms);
 }
+function setLoad(id,on) { const b=$(id); if(!b) return; on?b.classList.add('disabled-btn'):b.classList.remove('disabled-btn'); }
 
-// ── Autenticação ──────────────────────────────────────
-onAuthStateChanged(auth, user => {
-    if (user) {
-        S.user = user;
+// ── Auth ──────────────────────────────────────────────
+onAuthStateChanged(auth,user=>{
+    if(user){
+        S.user=user;
         $('view-auth').classList.add('hidden');
         $('view-app').classList.remove('hidden');
-        $('user-display').textContent = user.displayName || user.email;
-        if (user.photoURL) { $('user-photo').src = user.photoURL; $('user-photo').classList.remove('hidden'); }
+        $('user-display').textContent=user.displayName||user.email;
+        if(user.photoURL){$('user-photo').src=user.photoURL;$('user-photo').classList.remove('hidden');}
         iniciarEscuta();
     } else {
-        S.user = null;
+        S.user=null;
         $('view-auth').classList.remove('hidden');
         $('view-app').classList.add('hidden');
-        if (S.unsub) S.unsub();
+        if(S.unsub)S.unsub();
     }
 });
-
-$('btn-login').addEventListener('click', () => {
-    signInWithPopup(auth, prov).catch(e => toast('Erro: ' + e.message));
-});
-$('btn-logout').addEventListener('click', () => signOut(auth));
+$('btn-login').addEventListener('click',()=>signInWithPopup(auth,prov).catch(e=>toast('Erro: '+e.message)));
+$('btn-logout').addEventListener('click',()=>signOut(auth));
 
 // ── Firestore ─────────────────────────────────────────
-function iniciarEscuta() {
-    const ref = collection(db, 'users', S.user.uid, 'contas');
-    S.unsub = onSnapshot(ref, snap => {
-        S.contas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderDashboard();
-        renderLista();
-        if (S.contaAtivaId) renderDetalhe();
+function iniciarEscuta(){
+    const ref=collection(db,'users',S.user.uid,'contas');
+    S.unsub=onSnapshot(ref,snap=>{
+        S.contas=snap.docs.map(d=>({id:d.id,...d.data()}));
+        renderDashboard(); renderLista();
+        if(S.contaAtivaId) renderDetalhe();
     });
 }
 
 // ── Dashboard ─────────────────────────────────────────
-function calcDash() {
-    let aPagar = 0, aReceber = 0, vencido = 0, em7 = 0;
-    const hoje_ = hojeISO();
-    const em7d  = new Date(); em7d.setDate(em7d.getDate()+7);
-    const em7str = em7d.toISOString().split('T')[0];
-
-    S.contas.forEach(c => {
-        c.parcelas.forEach(p => {
-            const rest = p.valorRestante ?? p.valor;
-            if (rest <= 0) return;
-            const vencISO = parseDMY(p.vencimento) || p.vencimento;
-            if (c.tipo === 'pagar') aPagar += rest;
-            else aReceber += rest;
-            if (vencISO < hoje_) vencido += rest;
-            else if (vencISO <= em7str) em7 += rest;
-        });
-    });
-
-    return { aPagar, aReceber, saldo: aReceber - aPagar, vencido, em7 };
+function calcDash(){
+    let aPagar=0,aReceber=0,vencido=0,em7=0;
+    const hoje_=hojeISO();
+    const em7d=new Date(); em7d.setDate(em7d.getDate()+7);
+    const em7s=em7d.toISOString().split('T')[0];
+    S.contas.forEach(c=>c.parcelas.forEach(p=>{
+        const rest=p.valorRestante??p.valor; if(rest<=0) return;
+        const vISO=parseDMY(p.vencimento)||p.vencimento;
+        if(c.tipo==='pagar') aPagar+=rest; else aReceber+=rest;
+        if(vISO<hoje_) vencido+=rest; else if(vISO<=em7s) em7+=rest;
+    }));
+    return {aPagar,aReceber,vencido,em7};
 }
-
-function renderDashboard() {
-    const { aPagar, aReceber, saldo, vencido, em7 } = calcDash();
-    $('dash-saldo').textContent = fmt(saldo);
-    $('dash-saldo').className = `text-base font-black leading-tight ${saldo >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
-    $('dash-pagar').textContent = fmt(aPagar);
-    $('dash-receber').textContent = fmt(aReceber);
-    $('dash-vencido').textContent = fmt(vencido);
-    $('dash-7dias').textContent = fmt(em7);
+function renderDashboard(){
+    const {aPagar,aReceber,vencido,em7}=calcDash();
+    $('dash-pagar').textContent=fmt(aPagar);
+    $('dash-receber').textContent=fmt(aReceber);
+    $('dash-vencido').textContent=fmt(vencido);
+    $('dash-7dias').textContent=fmt(em7);
 }
 
 // ── Tabs ──────────────────────────────────────────────
-window.setTab = function(tab) {
-    S.tabAtiva = tab;
-    $('tab-pagar').classList.toggle('active', tab === 'pagar');
-    $('tab-receber').classList.toggle('active', tab === 'receber');
+window.setTab=function(tab){
+    S.tabAtiva=tab;
+    $('tab-pagar').classList.toggle('active',tab==='pagar');
+    $('tab-receber').classList.toggle('active',tab==='receber');
     renderLista();
 };
 
-// ── Status de conta ───────────────────────────────────
-function statusConta(c) {
-    let totalValor = 0, totalPago = 0, algumVenc = false;
-    const hoje_ = hojeISO();
-    c.parcelas.forEach(p => {
-        totalValor += p.valor;
-        totalPago  += (p.valor - (p.valorRestante ?? p.valor));
-        const vISO = parseDMY(p.vencimento) || p.vencimento;
-        if ((p.valorRestante ?? p.valor) > 0 && vISO < hoje_) algumVenc = true;
+// ── Status ────────────────────────────────────────────
+function statusConta(c){
+    let tV=0,tP=0,algV=false; const h=hojeISO();
+    c.parcelas.forEach(p=>{
+        tV+=p.valor; tP+=(p.valor-(p.valorRestante??p.valor));
+        const v=parseDMY(p.vencimento)||p.vencimento;
+        if((p.valorRestante??p.valor)>0&&v<h) algV=true;
     });
-    if (totalPago >= totalValor - 0.001) return 'quitada';
-    if (algumVenc) return 'vencida';
-    if (totalPago > 0) return 'parcial';
+    if(tP>=tV-0.001) return 'quitada';
+    if(algV) return 'vencida';
+    if(tP>0) return 'parcial';
     return 'aberta';
 }
-
-function proxVencISO(c) {
-    const pend = c.parcelas.filter(p => (p.valorRestante ?? p.valor) > 0);
-    const arr  = pend.length ? pend : c.parcelas;
-    const sorted = [...arr].sort((a,b) => {
-        const va = parseDMY(a.vencimento)||a.vencimento;
-        const vb = parseDMY(b.vencimento)||b.vencimento;
+function proxVencISO(c){
+    const pend=c.parcelas.filter(p=>(p.valorRestante??p.valor)>0);
+    const arr=pend.length?pend:c.parcelas;
+    return [...arr].sort((a,b)=>{
+        const va=parseDMY(a.vencimento)||a.vencimento;
+        const vb=parseDMY(b.vencimento)||b.vencimento;
         return va.localeCompare(vb);
-    });
-    return parseDMY(sorted[0].vencimento) || sorted[0].vencimento;
+    }).map(p=>parseDMY(p.vencimento)||p.vencimento)[0]||'';
 }
 
-// ── Render lista ──────────────────────────────────────
-function renderLista() {
-    const container = $('lista-contas');
-    const empty     = $('empty-state');
-    const contas    = S.contas.filter(c => c.tipo === S.tabAtiva);
-
-    if (contas.length === 0) {
-        container.innerHTML = '';
-        empty.classList.remove('hidden');
-        return;
-    }
-    empty.classList.add('hidden');
-
-    // Ordenar: vencidas → abertas → parciais → quitadas
-    const ordem = { vencida:0, aberta:1, parcial:2, quitada:3 };
-    const sorted = [...contas].sort((a,b) => {
-        const sa = statusConta(a), sb = statusConta(b);
-        if (ordem[sa] !== ordem[sb]) return ordem[sa] - ordem[sb];
-        return proxVencISO(a).localeCompare(proxVencISO(b));
+// ── Lista ─────────────────────────────────────────────
+function renderLista(){
+    const ct=$('lista-contas'), em=$('empty-state');
+    const contas=S.contas.filter(c=>c.tipo===S.tabAtiva);
+    if(!contas.length){ct.innerHTML='';em.classList.remove('hidden');return;}
+    em.classList.add('hidden');
+    const ord={vencida:0,aberta:1,parcial:2,quitada:3};
+    const sorted=[...contas].sort((a,b)=>{
+        const d=ord[statusConta(a)]-ord[statusConta(b)];
+        return d!==0?d:proxVencISO(a).localeCompare(proxVencISO(b));
     });
-
-    container.innerHTML = '';
-    sorted.forEach(c => {
-        const el = criarCard(c);
-        container.appendChild(el);
-    });
+    ct.innerHTML=''; sorted.forEach(c=>ct.appendChild(criarCard(c)));
 }
 
-function criarCard(c) {
-    const status    = statusConta(c);
-    const totalValor = c.parcelas.reduce((s,p) => s + p.valor, 0);
-    const totalRest  = c.parcelas.reduce((s,p) => s + (p.valorRestante ?? p.valor), 0);
-    const totalPago  = totalValor - totalRest;
-    const pct        = totalValor > 0 ? (totalPago / totalValor) * 100 : 0;
-    const proxVenc   = fmtData(proxVencISO(c));
-    const quitada    = status === 'quitada';
-    const isParc     = c.modalidade === 'parcelado';
-
-    const badgeMap = {
-        aberta:  `<span class="badge badge-${c.tipo}">${c.tipo === 'pagar' ? 'A Pagar' : 'A Receber'}</span>`,
-        vencida: `<span class="badge badge-vencida">Vencida</span>`,
-        parcial: `<span class="badge badge-parcial">Parcial</span>`,
-        quitada: `<span class="badge badge-quitada">Quitada</span>`,
-    };
-
-    const corValor = quitada ? '#475569' : (c.tipo === 'pagar' ? '#f87171' : '#34d399');
-    const bordaClass = status === 'vencida' ? 'borda-vencida' : status === 'parcial' ? 'borda-parcial' : '';
-
-    const div = document.createElement('div');
-    div.className = `conta-card glass-card rounded-[1.75rem] overflow-hidden cursor-pointer fade-up ${bordaClass}`;
-    div.innerHTML = `
-        <div class="p-5">
-            <div class="flex justify-between items-start gap-3">
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap mb-1">
-                        ${badgeMap[status]}
-                        ${isParc ? `<span class="badge" style="background:rgba(99,102,241,0.15);color:#818cf8">${c.parcelas.length}x</span>` : ''}
-                    </div>
-                    <h3 class="font-black text-white text-base truncate">${c.descricao}</h3>
-                    ${c.obs ? `<p class="text-[10px] text-slate-500 mt-0.5 truncate">${c.obs}</p>` : ''}
-                    <p class="text-[10px] text-slate-500 mt-1 font-bold">
-                        ${quitada ? '✓ Quitada' : `Vence ${proxVenc}`}
-                    </p>
-                </div>
-                <div class="text-right flex-shrink-0">
-                    <p class="font-black text-xl leading-tight" style="color:${corValor}">${fmt(totalRest)}</p>
-                    ${totalPago > 0 && !quitada ? `<p class="text-[10px] text-slate-500 mt-0.5">de ${fmt(totalValor)}</p>` : ''}
-                    ${quitada ? `<p class="text-[10px] text-slate-500">${fmt(totalValor)}</p>` : ''}
-                </div>
+function criarCard(c){
+    const st=statusConta(c);
+    const tV=c.parcelas.reduce((s,p)=>s+p.valor,0);
+    const tR=c.parcelas.reduce((s,p)=>s+(p.valorRestante??p.valor),0);
+    const tP=tV-tR, pct=tV>0?(tP/tV)*100:0;
+    const quitada=st==='quitada', isParc=c.modalidade==='parcelado';
+    const proxV=fmtData(proxVencISO(c));
+    const bm={aberta:`<span class="badge badge-${c.tipo}">${c.tipo==='pagar'?'A Pagar':'A Receber'}</span>`,vencida:`<span class="badge badge-vencida">Vencida</span>`,parcial:`<span class="badge badge-parcial">Parcial</span>`,quitada:`<span class="badge badge-quitada">Quitada</span>`};
+    const cor=quitada?'#475569':(c.tipo==='pagar'?'#f87171':'#34d399');
+    const borda=st==='vencida'?'borda-vencida':st==='parcial'?'borda-parcial':'';
+    const div=document.createElement('div');
+    div.className=`conta-card glass-card rounded-[1.75rem] overflow-hidden cursor-pointer fade-up ${borda}`;
+    div.innerHTML=`<div class="p-5">
+        <div class="flex justify-between items-start gap-3">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">${bm[st]}${isParc?`<span class="badge" style="background:rgba(99,102,241,0.15);color:#818cf8">${c.parcelas.length}x</span>`:''}</div>
+                <h3 class="font-black text-white text-base truncate">${c.descricao}</h3>
+                ${c.obs?`<p class="text-[10px] text-slate-500 mt-0.5 truncate">${c.obs}</p>`:''}
+                <p class="text-[10px] text-slate-500 mt-1 font-bold">${quitada?'✓ Quitada':`Vence ${proxV}`}</p>
             </div>
-            <div class="mt-3 prog-bar">
-                <div class="prog-fill ${quitada ? 'bg-slate-600' : c.tipo === 'pagar' ? 'bg-red-500' : 'bg-emerald-500'}" style="width:${pct}%"></div>
+            <div class="text-right flex-shrink-0">
+                <p class="font-black text-xl leading-tight" style="color:${cor}">${fmt(tR)}</p>
+                ${tP>0&&!quitada?`<p class="text-[10px] text-slate-500 mt-0.5">de ${fmt(tV)}</p>`:''}
+                ${quitada?`<p class="text-[10px] text-slate-500">${fmt(tV)}</p>`:''}
             </div>
         </div>
-    `;
-
-    div.addEventListener('click', () => verConta(c.id));
+        <div class="mt-3 prog-bar"><div class="prog-fill ${quitada?'bg-slate-600':c.tipo==='pagar'?'bg-red-500':'bg-emerald-500'}" style="width:${pct}%"></div></div>
+    </div>`;
+    div.addEventListener('click',()=>verConta(c.id));
     return div;
 }
 
-// ── Tela de Detalhe ───────────────────────────────────
-window.verConta = function(id) {
-    S.contaAtivaId = id;
+// ── Detalhe ───────────────────────────────────────────
+window.verConta=function(id){
+    S.contaAtivaId=id;
     $('view-lista').classList.add('hidden');
     $('view-detalhes').classList.remove('hidden');
     renderDetalhe();
 };
-
-$('btn-voltar').addEventListener('click', voltarLista);
-function voltarLista() {
-    S.contaAtivaId = null;
+$('btn-voltar').addEventListener('click',voltarLista);
+function voltarLista(){
+    S.contaAtivaId=null;
     $('view-lista').classList.remove('hidden');
     $('view-detalhes').classList.add('hidden');
 }
 
-function renderDetalhe() {
-    const c = S.contas.find(x => x.id === S.contaAtivaId);
-    if (!c) return;
-
-    const totalValor = c.parcelas.reduce((s,p) => s + p.valor, 0);
-    const totalRest  = c.parcelas.reduce((s,p) => s + (p.valorRestante ?? p.valor), 0);
-    const totalPago  = totalValor - totalRest;
-    const pct        = totalValor > 0 ? (totalPago/totalValor)*100 : 0;
-    const status     = statusConta(c);
-    const isParc     = c.modalidade === 'parcelado';
-
-    // Badges
-    const badgeMap = {
-        aberta:  `<span class="badge badge-${c.tipo}">${c.tipo === 'pagar' ? 'A Pagar' : 'A Receber'}</span>`,
-        vencida: `<span class="badge badge-vencida">⚠ Vencida</span>`,
-        parcial: `<span class="badge badge-parcial">Parcial</span>`,
-        quitada: `<span class="badge badge-quitada">✓ Quitada</span>`,
-    };
-    const modalMap = { avista:'À Vista', parcelado:`${c.parcelas.length}x Parcelado`, prazo:'Prazo Livre' };
-
-    $('det-badges').innerHTML = `${badgeMap[status]} <span class="badge" style="background:rgba(99,102,241,0.15);color:#818cf8">${modalMap[c.modalidade]}</span>`;
-    $('det-nome').textContent = c.descricao;
-    $('det-obs').textContent  = c.obs || '';
-    $('det-restante').textContent = fmt(totalRest);
-    $('det-restante').style.color = status === 'quitada' ? '#475569' : (c.tipo === 'pagar' ? '#f87171' : '#34d399');
-    $('det-total-label').textContent = `Total: ${fmt(totalValor)} · Pago: ${fmt(totalPago)}`;
-    $('det-barra').style.width = `${pct}%`;
-    $('det-barra').className = `prog-fill ${c.tipo === 'pagar' ? 'bg-red-500' : 'bg-emerald-500'}`;
-    $('det-perc').textContent = `${pct.toFixed(0)}% pago`;
-
-    // Parcelas
-    if (isParc) {
+function renderDetalhe(){
+    const c=S.contas.find(x=>x.id===S.contaAtivaId); if(!c) return;
+    const tV=c.parcelas.reduce((s,p)=>s+p.valor,0);
+    const tR=c.parcelas.reduce((s,p)=>s+(p.valorRestante??p.valor),0);
+    const tP=tV-tR, pct=tV>0?(tP/tV)*100:0;
+    const st=statusConta(c), isParc=c.modalidade==='parcelado';
+    const bm={aberta:`<span class="badge badge-${c.tipo}">${c.tipo==='pagar'?'A Pagar':'A Receber'}</span>`,vencida:`<span class="badge badge-vencida">⚠ Vencida</span>`,parcial:`<span class="badge badge-parcial">Parcial</span>`,quitada:`<span class="badge badge-quitada">✓ Quitada</span>`};
+    const mm={avista:'À Vista',parcelado:`${c.parcelas.length}x Parcelado`,prazo:'Prazo Livre'};
+    $('det-badges').innerHTML=`${bm[st]} <span class="badge" style="background:rgba(99,102,241,0.15);color:#818cf8">${mm[c.modalidade]}</span>`;
+    $('det-nome').textContent=c.descricao;
+    $('det-obs').textContent=c.obs||'';
+    $('det-restante').textContent=fmt(tR);
+    $('det-restante').style.color=st==='quitada'?'#475569':(c.tipo==='pagar'?'#f87171':'#34d399');
+    $('det-total-label').textContent=`Total: ${fmt(tV)} · Pago: ${fmt(tP)}`;
+    $('det-barra').style.width=`${pct}%`;
+    $('det-barra').className=`prog-fill ${c.tipo==='pagar'?'bg-red-500':'bg-emerald-500'}`;
+    $('det-perc').textContent=`${pct.toFixed(0)}% pago`;
+    if(isParc){
         $('det-parcelas-wrap').classList.remove('hidden');
         $('sel-parcela-wrap').classList.remove('hidden');
-        renderParcelasDetalhe(c);
-        renderSelParcela(c);
+        renderParcelasDetalhe(c); renderSelParcela(c);
     } else {
         $('det-parcelas-wrap').classList.add('hidden');
         $('sel-parcela-wrap').classList.add('hidden');
     }
-
-    // Hint e max
-    atualizarHintPag(c, isParc ? parseInt($('sel-parcela').value || '0') : 0);
-
-    // Histórico
+    atualizarHintPag(c,isParc?parseInt($('sel-parcela').value||'0'):0);
     renderHistorico(c);
 }
 
-function renderParcelasDetalhe(c) {
-    const hoje_ = hojeISO();
-    $('det-parcelas-lista').innerHTML = c.parcelas.map((p, idx) => {
-        const rest    = p.valorRestante ?? p.valor;
-        const vISO    = parseDMY(p.vencimento) || p.vencimento;
-        const vencida = rest > 0 && vISO < hoje_;
-        const quitada = rest <= 0.001;
-        return `
-            <div class="flex justify-between items-center bg-slate-800/40 p-3 rounded-xl border border-white/5">
-                <div>
-                    <p class="text-[8px] text-slate-500 font-black uppercase">Parcela ${p.numero}/${c.parcelas.length}</p>
-                    <p class="text-xs font-bold ${vencida ? 'text-red-400' : 'text-slate-300'}">${fmtData(p.vencimento)}${vencida?' ⚠':''}</p>
-                </div>
-                <div class="text-right">
-                    <p class="font-black text-sm ${quitada ? 'text-slate-500' : c.tipo === 'pagar' ? 'text-red-400' : 'text-emerald-400'}">${fmt(rest)}</p>
-                    ${rest < p.valor ? `<p class="text-[9px] text-slate-600">de ${fmt(p.valor)}</p>` : ''}
-                </div>
-                ${!quitada ? `<button onclick="window._pagarParcela(${idx})" class="ml-2 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[9px] font-black uppercase px-2 py-1.5 rounded-lg transition-all">Pagar</button>` : `<span class="ml-2 text-[9px] text-slate-600 font-black">✓</span>`}
+function renderParcelasDetalhe(c){
+    const h=hojeISO();
+    $('det-parcelas-lista').innerHTML=c.parcelas.map((p,idx)=>{
+        const rest=p.valorRestante??p.valor;
+        const vISO=parseDMY(p.vencimento)||p.vencimento;
+        const venc=rest>0&&vISO<h, quitada=rest<=0.001;
+        return `<div class="flex justify-between items-center bg-slate-800/40 p-3 rounded-xl border border-white/5">
+            <div>
+                <p class="text-[8px] text-slate-500 font-black uppercase">Parcela ${p.numero}/${c.parcelas.length}</p>
+                <p class="text-xs font-bold ${venc?'text-red-400':'text-slate-300'}">${fmtData(p.vencimento)}${venc?' ⚠':''}</p>
             </div>
-        `;
+            <div class="text-right">
+                <p class="font-black text-sm ${quitada?'text-slate-500':c.tipo==='pagar'?'text-red-400':'text-emerald-400'}">${fmt(rest)}</p>
+                ${rest<p.valor?`<p class="text-[9px] text-slate-600">de ${fmt(p.valor)}</p>`:''}
+            </div>
+            ${!quitada?`<button onclick="window._pagarParcela(${idx})" class="ml-2 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[9px] font-black uppercase px-2 py-1.5 rounded-lg transition-all">Pagar</button>`:`<span class="ml-2 text-[9px] text-slate-600 font-black">✓</span>`}
+        </div>`;
     }).join('');
 }
 
-function renderSelParcela(c) {
-    const sel = $('sel-parcela');
-    sel.innerHTML = c.parcelas.map((p, idx) => {
-        const rest    = p.valorRestante ?? p.valor;
-        const quitada = rest <= 0.001;
-        return `<option value="${idx}" ${quitada ? 'disabled' : ''}>${quitada ? '✓' : ''} Parcela ${p.numero}/${c.parcelas.length} — ${fmt(rest)} — Vence ${fmtData(p.vencimento)}</option>`;
+function renderSelParcela(c){
+    const sel=$('sel-parcela');
+    sel.innerHTML=c.parcelas.map((p,idx)=>{
+        const rest=p.valorRestante??p.valor, q=rest<=0.001;
+        return `<option value="${idx}" ${q?'disabled':''}>${q?'✓ ':''} Parcela ${p.numero}/${c.parcelas.length} — ${fmt(rest)} — Vence ${fmtData(p.vencimento)}</option>`;
     }).join('');
-
-    // Selecionar primeira não quitada
-    const primeiraAberta = c.parcelas.findIndex(p => (p.valorRestante ?? p.valor) > 0.001);
-    if (primeiraAberta >= 0) sel.value = primeiraAberta;
-
-    sel.addEventListener('change', () => {
-        atualizarHintPag(c, parseInt(sel.value));
-    });
+    const first=c.parcelas.findIndex(p=>(p.valorRestante??p.valor)>0.001);
+    if(first>=0) sel.value=first;
+    sel.onchange=()=>atualizarHintPag(c,parseInt(sel.value));
 }
 
-function atualizarHintPag(c, idx) {
-    const p = c.parcelas[idx];
-    if (!p) return;
-    const rest = p.valorRestante ?? p.valor;
-    $('hint-pag').textContent = `Restante: ${fmt(rest)} · Vence ${fmtData(p.vencimento)}`;
-    $('input-valor-pag').value = '';
-
-    $('btn-quitar-total').onclick = () => {
-        $('input-valor-pag').value = rest.toFixed(2);
-    };
+function atualizarHintPag(c,idx){
+    const p=c.parcelas[idx]; if(!p) return;
+    const rest=p.valorRestante??p.valor;
+    $('hint-pag').textContent=`Restante: ${fmt(rest)} · Vence ${fmtData(p.vencimento)}`;
+    $('input-valor-pag').value='';
+    $('btn-quitar-total').onclick=()=>setMoeda($('input-valor-pag'),rest);
 }
 
-window._pagarParcela = function(idx) {
-    const sel = $('sel-parcela');
-    if (sel) sel.value = idx;
-    const c = S.contas.find(x => x.id === S.contaAtivaId);
-    if (c) atualizarHintPag(c, idx);
+window._pagarParcela=function(idx){
+    const sel=$('sel-parcela'); if(sel) sel.value=idx;
+    const c=S.contas.find(x=>x.id===S.contaAtivaId);
+    if(c) atualizarHintPag(c,idx);
     $('input-valor-pag').focus();
 };
 
-// Lançar pagamento
-$('btn-lancar-pag').addEventListener('click', async () => {
-    const c = S.contas.find(x => x.id === S.contaAtivaId);
-    if (!c) return;
-
-    const isParc = c.modalidade === 'parcelado';
-    const idx    = isParc ? parseInt($('sel-parcela').value) : 0;
-    const valor  = parseFloat($('input-valor-pag').value);
-    const p      = c.parcelas[idx];
-    const rest   = p.valorRestante ?? p.valor;
-
-    if (!valor || valor <= 0)             { toast('Digite um valor válido'); return; }
-    if (valor > rest + 0.001)             { toast(`Máximo: ${fmt(rest)}`);   return; }
-
-    setLoad('btn-lancar-pag', true);
-
-    const novasParcelas = c.parcelas.map((parc, i) => {
-        if (i !== idx) return parc;
-        const novoRest = parseFloat((rest - valor).toFixed(2));
-        return {
-            ...parc,
-            valorRestante: novoRest < 0.01 ? 0 : novoRest,
-            pagamentos: [...(parc.pagamentos||[]), {
-                valor,
-                data: hoje(),
-                registradoEm: new Date().toISOString()
-            }]
-        };
+$('btn-lancar-pag').addEventListener('click',async()=>{
+    const c=S.contas.find(x=>x.id===S.contaAtivaId); if(!c) return;
+    const isParc=c.modalidade==='parcelado';
+    const idx=isParc?parseInt($('sel-parcela').value):0;
+    const valor=parseMoeda($('input-valor-pag').value);
+    const p=c.parcelas[idx], rest=p.valorRestante??p.valor;
+    if(isNaN(valor)||valor<=0){toast('Digite um valor válido');return;}
+    if(valor>rest+0.001){toast(`Máximo: ${fmt(rest)}`);return;}
+    setLoad('btn-lancar-pag',true);
+    const novasParcelas=c.parcelas.map((parc,i)=>{
+        if(i!==idx) return parc;
+        const nr=parseFloat((rest-valor).toFixed(2));
+        return{...parc,valorRestante:nr<0.01?0:nr,pagamentos:[...(parc.pagamentos||[]),{valor,data:hoje(),registradoEm:new Date().toISOString()}]};
     });
-
-    try {
-        await updateDoc(doc(db,'users',S.user.uid,'contas',S.contaAtivaId), { parcelas: novasParcelas });
-        $('input-valor-pag').value = '';
-        toast(c.tipo === 'pagar' ? 'Pagamento registrado!' : 'Recebimento registrado!');
-    } catch(e) {
-        toast('Erro: ' + e.message);
-    } finally {
-        setLoad('btn-lancar-pag', false);
-    }
+    try{
+        await updateDoc(doc(db,'users',S.user.uid,'contas',S.contaAtivaId),{parcelas:novasParcelas});
+        $('input-valor-pag').value='';
+        toast(c.tipo==='pagar'?'Pagamento registrado!':'Recebimento registrado!');
+    }catch(e){toast('Erro: '+e.message);}
+    finally{setLoad('btn-lancar-pag',false);}
 });
 
-// Histórico
-function renderHistorico(c) {
-    const todos = [];
-    c.parcelas.forEach(p => {
-        (p.pagamentos||[]).forEach(pg => {
-            todos.push({ ...pg, parcelaNum: p.numero, totalParcelas: c.parcelas.length });
-        });
-    });
-    todos.sort((a,b) => b.registradoEm?.localeCompare(a.registradoEm||'') || 0);
-
-    const container = $('det-historico');
-    if (todos.length === 0) {
-        container.innerHTML = `<p class="text-center text-slate-700 text-[10px] py-6 font-bold uppercase">Sem registros</p>`;
-        return;
-    }
-    container.innerHTML = todos.map(pg => `
+function renderHistorico(c){
+    const todos=[];
+    c.parcelas.forEach(p=>(p.pagamentos||[]).forEach(pg=>todos.push({...pg,parcelaNum:p.numero,totalParcelas:c.parcelas.length})));
+    todos.sort((a,b)=>(b.registradoEm||'').localeCompare(a.registradoEm||''));
+    const ct=$('det-historico');
+    if(!todos.length){ct.innerHTML=`<p class="text-center text-slate-700 text-[10px] py-6 font-bold uppercase">Sem registros</p>`;return;}
+    ct.innerHTML=todos.map(pg=>`
         <div class="flex justify-between items-center bg-slate-800/40 p-4 rounded-xl border border-white/5">
             <div>
-                <p class="text-[8px] text-slate-500 font-bold">${pg.data}${c.modalidade==='parcelado' ? ` · Parcela ${pg.parcelaNum}/${pg.totalParcelas}` : ''}</p>
+                <p class="text-[8px] text-slate-500 font-bold">${pg.data}${c.modalidade==='parcelado'?` · Parcela ${pg.parcelaNum}/${pg.totalParcelas}`:''}</p>
                 <p class="text-white font-black text-sm">${fmt(pg.valor)}</p>
             </div>
             <svg class="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><polyline points="20 6 9 17 4 12" stroke-width="2.5"/></svg>
-        </div>
-    `).join('');
+        </div>`).join('');
 }
 
-// Excluir conta
-$('btn-excluir-conta').addEventListener('click', () => {
-    const c = S.contas.find(x => x.id === S.contaAtivaId);
-    if (!c) return;
-
-    // Mini confirm inline
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;padding:24px';
-    overlay.innerHTML = `
-        <div style="background:#1e293b;border:1px solid rgba(255,255,255,0.1);border-radius:2rem;padding:2rem;max-width:300px;width:100%;text-align:center">
-            <p style="font-size:1.5rem;margin-bottom:10px">🗑️</p>
-            <p style="font-weight:900;font-size:1rem;margin-bottom:6px">Excluir registro?</p>
-            <p style="color:#64748b;font-size:0.8rem;margin-bottom:1.5rem">"${c.descricao}"<br>Esta ação é permanente.</p>
-            <div style="display:flex;gap:10px">
-                <button id="ov-cancel" style="flex:1;background:#334155;border:none;color:#f1f5f9;border-radius:1rem;padding:12px;font-family:Inter,sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer">Cancelar</button>
-                <button id="ov-confirm" style="flex:1;background:#ef4444;border:none;color:white;border-radius:1rem;padding:12px;font-family:Inter,sans-serif;font-weight:900;font-size:0.85rem;cursor:pointer">Excluir</button>
-            </div>
-        </div>`;
-    document.body.appendChild(overlay);
-    overlay.querySelector('#ov-cancel').onclick = () => overlay.remove();
-    overlay.querySelector('#ov-confirm').onclick = async () => {
-        overlay.remove();
+// ── Excluir ───────────────────────────────────────────
+$('btn-excluir-conta').addEventListener('click',()=>{
+    const c=S.contas.find(x=>x.id===S.contaAtivaId); if(!c) return;
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;padding:24px';
+    ov.innerHTML=`<div style="background:#1e293b;border:1px solid rgba(255,255,255,0.1);border-radius:2rem;padding:2rem;max-width:300px;width:100%;text-align:center">
+        <p style="font-size:1.5rem;margin-bottom:10px">🗑️</p>
+        <p style="font-weight:900;font-size:1rem;margin-bottom:6px">Excluir registro?</p>
+        <p style="color:#64748b;font-size:0.8rem;margin-bottom:1.5rem">"${c.descricao}"<br>Esta ação é permanente.</p>
+        <div style="display:flex;gap:10px">
+            <button id="ov-cancel" style="flex:1;background:#334155;border:none;color:#f1f5f9;border-radius:1rem;padding:12px;font-family:Inter,sans-serif;font-weight:700;cursor:pointer">Cancelar</button>
+            <button id="ov-confirm" style="flex:1;background:#ef4444;border:none;color:white;border-radius:1rem;padding:12px;font-family:Inter,sans-serif;font-weight:900;cursor:pointer">Excluir</button>
+        </div></div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('#ov-cancel').onclick=()=>ov.remove();
+    ov.querySelector('#ov-confirm').onclick=async()=>{
+        ov.remove();
         await deleteDoc(doc(db,'users',S.user.uid,'contas',S.contaAtivaId));
-        voltarLista();
-        toast('Conta excluída');
+        voltarLista(); toast('Conta excluída');
     };
 });
 
-// ── Modal Nova Conta ──────────────────────────────────
-$('btn-nova').addEventListener('click', abrirNova);
+// ── Editar ────────────────────────────────────────────
+$('btn-editar-conta').addEventListener('click',()=>{
+    const c=S.contas.find(x=>x.id===S.contaAtivaId); if(!c) return;
+    S.editTipo=c.tipo;
+    $('etipo-pagar').classList.toggle('active',c.tipo==='pagar');
+    $('etipo-receber').classList.toggle('active',c.tipo==='receber');
+    $('e-descricao').value=c.descricao;
+    $('e-obs').value=c.obs||'';
 
-function abrirNova() {
-    // Reset
-    ['n-descricao','n-valor','n-vencimento','n-obs','n-primeira-parc'].forEach(id => $(id).value = '');
-    $('n-qtd-parcelas').value = '2';
-    S.novoTipo  = S.tabAtiva;
-    S.novaModal = 'avista';
-    window.setNovoTipo(S.novoTipo);
-    window.setNovaModal('avista');
-    abrirModal('modal-nova');
-}
+    // Gerar campos de vencimento por parcela
+    $('e-parcelas-lista').innerHTML=c.parcelas.map((p,idx)=>{
+        const rest=p.valorRestante??p.valor, q=rest<=0.001;
+        return `<div class="flex items-center gap-2 bg-slate-800/40 p-2.5 rounded-xl border border-white/5">
+            <span class="text-[9px] font-black text-slate-500 uppercase whitespace-nowrap w-14 shrink-0">Parc ${p.numero}</span>
+            <input type="text" id="e-venc-${idx}" value="${fmtData(p.vencimento)}" maxlength="10"
+                class="inp flex-1 text-sm" style="padding:8px 12px" inputmode="numeric" ${q?'disabled':''}>
+            ${q?`<span class="text-[9px] text-emerald-700 font-black whitespace-nowrap">✓ pago</span>`:''}
+        </div>`;
+    }).join('');
 
-window.setNovoTipo = function(tipo) {
-    S.novoTipo = tipo;
-    $('ntipo-pagar').classList.toggle('active', tipo==='pagar');
-    $('ntipo-receber').classList.toggle('active', tipo==='receber');
-};
+    c.parcelas.forEach((_,idx)=>{
+        const el=$(`e-venc-${idx}`);
+        if(el&&!el.disabled) maskData(el);
+    });
 
-window.setNovaModal = function(modal) {
-    S.novaModal = modal;
-    ['avista','parcelado','prazo'].forEach(m => $('nmod-'+m).classList.toggle('active', m===modal));
-    $('campo-venc').classList.toggle('hidden', modal === 'parcelado');
-    $('campo-parc').classList.toggle('hidden', modal !== 'parcelado');
-};
-
-window.salvarConta = async function() {
-    const descricao = $('n-descricao').value.trim();
-    const valor     = parseFloat($('n-valor').value);
-    const obs       = $('n-obs').value.trim();
-    const modal     = S.novaModal;
-
-    if (!descricao)        { toast('Digite uma descrição'); return; }
-    if (!valor || valor<=0){ toast('Digite um valor válido'); return; }
-
-    let parcelas = [];
-
-    if (modal === 'parcelado') {
-        const qtd      = parseInt($('n-qtd-parcelas').value);
-        const primRaw  = $('n-primeira-parc').value;
-        const primISO  = parseDMY(primRaw);
-        if (!primISO)  { toast('Informe o vencimento da 1ª parcela (DD/MM/AAAA)'); return; }
-
-        const valParc = parseFloat((valor / qtd).toFixed(2));
-        const [y,m,d] = primISO.split('-').map(Number);
-
-        for (let i = 0; i < qtd; i++) {
-            const dt   = new Date(y, m-1+i, d);
-            const vISO = dt.toISOString().split('T')[0];
-            const vDMY = fmtData(vISO);
-            const valFinal = i === qtd-1
-                ? parseFloat((valor - valParc*(qtd-1)).toFixed(2))
-                : valParc;
-            parcelas.push({ numero: i+1, valor: valFinal, valorRestante: valFinal, vencimento: vDMY, pagamentos: [] });
-        }
-    } else {
-        const vRaw = $('n-vencimento').value;
-        const vISO = parseDMY(vRaw);
-        if (!vISO) { toast('Informe a data de vencimento (DD/MM/AAAA)'); return; }
-        parcelas = [{ numero:1, valor, valorRestante: valor, vencimento: vRaw, pagamentos: [] }];
-    }
-
-    setLoad('btn-salvar-conta', true);
-    try {
-        await addDoc(collection(db,'users',S.user.uid,'contas'), {
-            tipo: S.novoTipo,
-            descricao,
-            valorTotal: valor,
-            modalidade: modal,
-            obs,
-            parcelas,
-            criadoEm: serverTimestamp()
-        });
-        fecharModal('modal-nova');
-        toast('Conta salva!');
-    } catch(e) {
-        toast('Erro: ' + e.message);
-    } finally {
-        setLoad('btn-salvar-conta', false);
-    }
-};
-
-// ── Modal utils ───────────────────────────────────────
-window.abrirModal = function(id) {
-    $(id).classList.add('active');
-    document.body.style.overflow = 'hidden';
-};
-window.fecharModal = function(id) {
-    $(id).classList.remove('active');
-    document.body.style.overflow = '';
-};
-
-// Fechar clicando fora
-document.querySelectorAll('.modal').forEach(m => {
-    m.addEventListener('click', e => { if (e.target === m) fecharModal(m.id); });
+    abrirModal('modal-editar');
 });
 
-// Aplicar máscara de data
+window.setEditTipo=function(tipo){
+    S.editTipo=tipo;
+    $('etipo-pagar').classList.toggle('active',tipo==='pagar');
+    $('etipo-receber').classList.toggle('active',tipo==='receber');
+};
+
+$('btn-salvar-edicao').addEventListener('click',async()=>{
+    const c=S.contas.find(x=>x.id===S.contaAtivaId); if(!c) return;
+    const descricao=$('e-descricao').value.trim();
+    if(!descricao){toast('Digite uma descrição');return;}
+    const obs=$('e-obs').value.trim();
+
+    const novasParcelas=c.parcelas.map((p,idx)=>{
+        const el=$(`e-venc-${idx}`);
+        if(!el||el.disabled) return p;
+        const v=el.value.trim();
+        return parseDMY(v) ? {...p,vencimento:v} : p;
+    });
+
+    setLoad('btn-salvar-edicao',true);
+    try{
+        await updateDoc(doc(db,'users',S.user.uid,'contas',S.contaAtivaId),{tipo:S.editTipo,descricao,obs,parcelas:novasParcelas});
+        fecharModal('modal-editar');
+        toast('Conta atualizada!');
+    }catch(e){toast('Erro: '+e.message);}
+    finally{setLoad('btn-salvar-edicao',false);}
+});
+
+// ── Nova conta ────────────────────────────────────────
+$('btn-nova').addEventListener('click',abrirNova);
+function abrirNova(){
+    ['n-descricao','n-valor','n-vencimento','n-obs','n-primeira-parc'].forEach(id=>$(id).value='');
+    $('n-qtd-parcelas').value='2';
+    S.novoTipo=S.tabAtiva; S.novaModal='avista';
+    window.setNovoTipo(S.novoTipo); window.setNovaModal('avista');
+    abrirModal('modal-nova');
+}
+window.setNovoTipo=function(tipo){
+    S.novoTipo=tipo;
+    $('ntipo-pagar').classList.toggle('active',tipo==='pagar');
+    $('ntipo-receber').classList.toggle('active',tipo==='receber');
+};
+window.setNovaModal=function(modal){
+    S.novaModal=modal;
+    ['avista','parcelado','prazo'].forEach(m=>$('nmod-'+m).classList.toggle('active',m===modal));
+    $('campo-venc').classList.toggle('hidden',modal==='parcelado');
+    $('campo-parc').classList.toggle('hidden',modal!=='parcelado');
+};
+window.salvarConta=async function(){
+    const descricao=$('n-descricao').value.trim();
+    const valor=parseMoeda($('n-valor').value);
+    const obs=$('n-obs').value.trim();
+    const modal=S.novaModal;
+    if(!descricao){toast('Digite uma descrição');return;}
+    if(isNaN(valor)||valor<=0){toast('Digite um valor válido');return;}
+    let parcelas=[];
+    if(modal==='parcelado'){
+        const qtd=parseInt($('n-qtd-parcelas').value);
+        const primRaw=$('n-primeira-parc').value;
+        const primISO=parseDMY(primRaw);
+        if(!primISO){toast('Informe o vencimento da 1ª parcela (DD/MM/AAAA)');return;}
+        const valParc=parseFloat((valor/qtd).toFixed(2));
+        const [y,m,d]=primISO.split('-').map(Number);
+        for(let i=0;i<qtd;i++){
+            const dt=new Date(y,m-1+i,d);
+            const vDMY=fmtData(dt.toISOString().split('T')[0]);
+            const valF=i===qtd-1?parseFloat((valor-valParc*(qtd-1)).toFixed(2)):valParc;
+            parcelas.push({numero:i+1,valor:valF,valorRestante:valF,vencimento:vDMY,pagamentos:[]});
+        }
+    } else {
+        const vRaw=$('n-vencimento').value;
+        if(!parseDMY(vRaw)){toast('Informe a data de vencimento (DD/MM/AAAA)');return;}
+        parcelas=[{numero:1,valor,valorRestante:valor,vencimento:vRaw,pagamentos:[]}];
+    }
+    setLoad('btn-salvar-conta',true);
+    try{
+        await addDoc(collection(db,'users',S.user.uid,'contas'),{tipo:S.novoTipo,descricao,valorTotal:valor,modalidade:modal,obs,parcelas,criadoEm:serverTimestamp()});
+        fecharModal('modal-nova'); toast('Conta salva!');
+    }catch(e){toast('Erro: '+e.message);}
+    finally{setLoad('btn-salvar-conta',false);}
+};
+
+// ── Modais ────────────────────────────────────────────
+window.abrirModal=function(id){$(id).classList.add('active');document.body.style.overflow='hidden';};
+window.fecharModal=function(id){$(id).classList.remove('active');document.body.style.overflow='';};
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)fecharModal(m.id);}));
+
+// ── Máscaras iniciais ─────────────────────────────────
 maskData($('n-vencimento'));
 maskData($('n-primeira-parc'));
+maskMoeda($('n-valor'));
+maskMoeda($('input-valor-pag'));
 </script>
 </body>
 </html>
